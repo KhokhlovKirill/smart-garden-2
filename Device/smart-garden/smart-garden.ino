@@ -59,7 +59,6 @@ const byte airTempPreset4 = 0;
 //_________________________________________
 
 const int id = 1;
-String deviceName = "Smart Garden";
 byte regularUpdate = 1;
 
 byte groundHumidity = 0;
@@ -232,7 +231,7 @@ String checkWifiConnection()
   return "ERROR";
 }
 
-void sendData()
+void sendRequest()
 {
   makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity));
 }
@@ -329,6 +328,19 @@ void getValueFromSensors()
   {
     notificationCode[3] = '0';
   }
+}
+
+void sendData(){
+  lcd.clear();
+  lcd.setCursor(3, 1);
+  lcd.print("Updating data...");
+  lcd.setCursor(5, 2);
+  lcd.print("Wait...");
+
+  sendRequest();
+
+  lcd.clear();
+  lcdDisplay();
 }
 
 void setup()
@@ -478,12 +490,20 @@ void menuSettings(boolean back)
     {
       switch (posMenu)
       {
-      case 1:
-        // TODO 1 Пункт меню
+      case 0:
+        regularUpdateSettings();
         break;
 
+      case 1:
+        menuWifiSettings();
+        break;
+      
       case 2:
-        // TODO 2 Пункт меню
+        sendData();
+        break;
+
+      case 3:
+        // TODO 4 Пункт меню
         break;
       }
     }
@@ -521,7 +541,7 @@ void menuSettingsValue()
     if (but_up.isClick())
       posMenu = posMenu - 1;
 
-    if (posMenu == 0)
+    if (posMenu == -1)
     {
       menuSettings(true);
     }
@@ -573,20 +593,28 @@ void menuSettingsValue()
 
     if (posMenu == 4)
     {
-      // Переход на след стр
-      posMenu = 3; // Временный запрет перехода на 3 стр
+      // TODO Переход на след стр
+      posMenu = 3; // !Временный запрет перехода на 3 стр
     }
 
     if (but_enter.isSingle())
     {
       switch (posMenu)
       {
-      case 1:
+      case 0:
         // TODO 1 Пункт меню
         break;
 
-      case 2:
+      case 1:
         // TODO 2 Пункт меню
+        break;
+      
+      case 2:
+        // TODO 3 Пункт меню
+        break;
+      
+      case 3:
+        // TODO 4 Пункт меню
         break;
       }
     }
@@ -910,3 +938,10 @@ void airTempSettings()
   }
 }
 //________________________________________________
+
+
+// Меню настроек Wi-Fi
+void menuWifiSettings(){
+
+}
+//___________________________________
