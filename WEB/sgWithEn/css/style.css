@@ -1,0 +1,397 @@
+@font-face {
+    font-family: 'Pacifico-Regular';
+    src: local('Pacifico-Regular'),
+         url('../fonts/Pacifico-Regular.woff2') format('woff2'), 
+         url('../fonts/Pacifico-Regular.woff') format('woff'),
+         url('../fonts/Pacifico-Regular.ttf') format('ttf'),
+         url('../fonts/Pacifico-Regular.eot') format('eot');
+  }
+
+  @font-face {
+    font-family: 'PTSansCaption-Regular';
+    src: local('PTSansCaption-Regular'),
+         url('../fonts/PTSansCaption-Regular.woff2') format('woff2'), 
+         url('../fonts/PTSansCaption-Regular.woff') format('woff'),
+         url('../fonts/PTSansCaption-Regular.ttf') format('ttf'),
+         url('../fonts/PTSansCaption-Regular.eot') format('eot');
+  }
+
+  @font-face {
+    font-family: 'PTSansCaption-Bold';
+    src: local('PTSansCaption-Bold'),
+         url('../fonts/PTSansCaption-Bold.woff2') format('woff2'), 
+         url('../fonts/PTSansCaption-Bold.woff') format('woff'),
+         url('../fonts/PTSansCaption-Bold.ttf') format('ttf'),
+         url('../fonts/PTSansCaption-Bold.eot') format('eot');
+  }
+  
+a{
+    text-decoration: none;
+}
+
+body{
+    background-image: url(../img/background-image.jpg);
+}
+
+.language-selector{
+    position: fixed;
+    left: 90%;
+    top: 90%;
+
+    width: 120px;
+    height: 50px;
+
+    border-radius: 20px;
+    -webkit-box-shadow: 4px 4px 17px 8px rgba(0, 128, 0, 0.2);
+    -moz-box-shadow: 4px 4px 17px 8px rgba(0, 128, 0, 0.2);
+    box-shadow: 4px 4px 17px 8px rgba(0, 128, 0, 0.2);
+
+    background-color: white;
+}
+
+.language-selector-content *{
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.language-selector-content{
+    display: flex;
+
+    justify-content: center;
+    margin-top: 9px;
+    margin-left: 7px;
+}
+
+.language-separator{
+    height: 25px;
+    width: 2px;
+
+    margin-right: 10px;
+    margin-top: 3px;
+
+    background-color: #008000;
+}
+
+.language-selector-link{
+    padding: 5px;
+
+    text-align: center;
+    vertical-align: middle;
+    margin-right: 10px;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+    color: #008000;
+
+    border-radius: 10px;
+}
+
+.current-lang{
+    background-color: #008000;
+    color: white;
+}
+
+.container{
+    max-width: 85%;
+    min-width: 415px;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.header{
+    min-height: 77px;
+
+    margin-top: 50px;
+    margin-bottom: 50px;
+
+    border-radius: 30px;
+    background-color: white;
+}
+
+.header *{
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.header-content{
+    display: block;
+    text-align: center;
+
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+
+.header-logo-img{
+    height: 48px;
+    width: 36px;
+
+    margin-top: 13px;
+    margin-bottom: 12px;
+    margin-left: 26px;
+    margin-right: 28px;
+}
+
+.header-logo-text{
+    margin-right: 28px;
+
+    font-family: 'Pacifico-Regular';
+    font-size: 36px;
+
+    color: #008000;
+}
+
+.header-separator{
+    height: 48px;
+    width: 2px;
+
+    margin-right: 28px;
+
+    background-color: #BFBFBF;
+}
+
+@media screen and (max-width:1595px) {
+    .header-separator {
+        display: none;
+    }
+}
+
+.header-device-name{
+    font-family: 'PTSansCaption-Bold';
+    font-size: 28px;
+
+    margin-right: 20px;
+}
+
+.header-device-id{
+    font-family: 'PTSansCaption-Bold';
+    font-size: 18px;
+
+    margin-right: 28px;
+
+    color: #BFBFBF;
+}
+
+@media screen and (max-width:1175px) {
+    .header-device-id{
+        display: none;
+    }
+}
+
+.header-online-indicator{
+    margin-right: 10px;
+}
+
+.header-online-status{
+    font-family: 'PTSansCaption-Regular';
+    font-size: 20px;
+
+    margin-right: 5px;
+
+    color: #008000;
+}
+
+.header-online-status-text{
+    font-family: 'PTSansCaption-Regular';
+    font-size: 20px;
+
+    margin-right: 28px;
+
+    color: #008000;
+}
+
+@media screen and (max-width:1475px) {
+    .header-online-status-text{
+        display: none;
+    }
+
+    .header-online-status{
+        margin-right: 28px;
+    }
+}
+
+.header-settings-link{
+    width: 30px;
+    height: 30px;
+
+    margin-right: 28px;
+}
+
+@media screen and (max-width:1155px) {
+    .header *:not(.header-logo-img){
+        padding-top: 5px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+    }
+
+    .header-logo-text{
+        margin-left: 28px;
+    }
+}
+
+
+.main{
+    display: inline-block;
+    min-width: 415px;
+    width: 54.07%;
+    height: 669px;
+
+    padding-bottom: 30px;
+
+    background-color: white;
+    border-radius: 30px;
+}
+
+.main-content{
+    padding-top: 35px;
+    padding-left: 50px;
+}
+
+.main-ground{
+    margin-bottom: 15px;
+}
+
+.main-title{
+    display: block;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 24px;
+
+    margin-bottom: 30px;
+
+    color: #008000;
+}
+
+.main-separator{
+    display: block;
+    width: 50%;
+    height: 2px;
+
+    margin-bottom: 30px;
+
+    background-color: #008000;
+}
+
+.main-data *{
+    display: inline-block;
+
+    margin-bottom: 25px;
+    
+    vertical-align: middle;
+}
+
+.main-icon{
+    width: 79px;
+    height: 79px;
+
+    margin-right: 20px;
+}
+
+.main-value{
+    font-family: 'PTSansCaption-Bold';
+    font-size: 55px;
+}
+
+.main-charts{
+    max-width: 45%;
+    height: 75px;
+
+    margin-left: 25px;
+}
+
+
+.notification{
+    display: inline-block;
+
+    vertical-align: top;
+    min-width: 400px;
+    width: 38.00%;
+    min-height: 401px;
+
+    margin-left: 7%;
+
+    background-color: white;
+    border-radius: 30px;
+}
+
+@media screen and (max-width:1240px) {
+    .notification{
+        display: block;
+        width: 100%;
+        margin-top: 40px;
+        margin-left: 0;
+    }
+
+    .main{
+        width: 100%;
+    }
+}
+
+.notification-content{
+    padding-top: 35px;
+    padding-left: 50px;
+    padding-bottom: 60px;
+}
+
+.notification-title{
+    display: block;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 24px;
+
+    margin-bottom: 30px;
+
+    color: #008000;
+}
+
+.notification-separator{
+    display: block;
+    width: 50%;
+    height: 2px;
+
+    margin-bottom: 30px;
+
+    background-color: #008000;
+}
+
+.notification-message-box{
+    width: 79.37%;
+    min-height: 63px;
+
+    margin-bottom: 42px;
+
+    border-radius: 30px;
+    background-color: #E75C5C;
+    text-align: center;
+}
+
+.notification-message{
+    display: block;
+
+    padding: 21px;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+    color: white;
+}
+
+.notification-wifi-content *{
+    display: inline-block;
+
+    vertical-align: middle;
+}
+
+.notification-wifi-icon{
+    width: 50px;
+    height: 50px;
+}
+
+.notification-wifi-ssid{
+    margin-left: 24px;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 24px;
+
+    color: #008000;
+}

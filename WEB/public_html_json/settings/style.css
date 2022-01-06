@@ -1,0 +1,448 @@
+@font-face {
+    font-family: 'Pacifico-Regular';
+    src: local('Pacifico-Regular'),
+         url('../fonts/Pacifico-Regular.woff2') format('woff2'), 
+         url('../fonts/Pacifico-Regular.woff') format('woff'),
+         url('../fonts/Pacifico-Regular.ttf') format('ttf'),
+         url('../fonts/Pacifico-Regular.eot') format('eot');
+  }
+
+  @font-face {
+    font-family: 'PTSansCaption-Regular';
+    src: local('PTSansCaption-Regular'),
+         url('../fonts/PTSansCaption-Regular.woff2') format('woff2'), 
+         url('../fonts/PTSansCaption-Regular.woff') format('woff'),
+         url('../fonts/PTSansCaption-Regular.ttf') format('ttf'),
+         url('../fonts/PTSansCaption-Regular.eot') format('eot');
+  }
+
+  @font-face {
+    font-family: 'PTSansCaption-Bold';
+    src: local('PTSansCaption-Bold'),
+         url('../fonts/PTSansCaption-Bold.woff2') format('woff2'), 
+         url('../fonts/PTSansCaption-Bold.woff') format('woff'),
+         url('../fonts/PTSansCaption-Bold.ttf') format('ttf'),
+         url('../fonts/PTSansCaption-Bold.eot') format('eot');
+  }
+
+li{
+    list-style-type: none;
+}
+ul{
+    margin-left: 0;
+    padding-left: 0;
+}
+
+input {
+    outline:none;
+}    
+
+body{
+    background-image: url(../img/background-image.jpg);
+}
+
+.container{
+    max-width: 85%;
+    min-width: 415px;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.header{
+    min-height: 77px;
+
+    margin-top: 50px;
+    margin-bottom: 50px;
+
+    border-radius: 30px;
+    background-color: white;
+}
+
+.header *{
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.header-content{
+    display: block;
+    text-align: center;
+}
+
+
+.header-logo-img{
+    height: 48px;
+    width: 36px;
+
+    margin-top: 13px;
+    margin-bottom: 12px;
+    margin-left: 26px;
+    margin-right: 28px;
+}
+
+.header-logo-text{
+    margin-right: 28px;
+
+    font-family: 'Pacifico-Regular';
+    font-size: 36px;
+
+    color: #008000;
+}
+
+.header-separator{
+    height: 48px;
+    width: 2px;
+
+    margin-right: 28px;
+
+    background-color: #BFBFBF;
+}
+
+@media screen and (max-width:1595px) {
+    .header-separator {
+        display: none;
+    }
+}
+
+.header-device-name{
+    font-family: 'PTSansCaption-Bold';
+    font-size: 28px;
+
+    margin-right: 20px;
+}
+
+.header-device-id{
+    font-family: 'PTSansCaption-Bold';
+    font-size: 18px;
+
+    margin-right: 28px;
+
+    color: #BFBFBF;
+}
+
+@media screen and (max-width:1175px) {
+    .header-device-id{
+        display: none;
+    }
+}
+
+.header-online-indicator{
+    margin-right: 10px;
+}
+
+.header-online-status{
+    font-family: 'PTSansCaption-Regular';
+    font-size: 20px;
+
+    margin-right: 5px;
+
+    color: #008000;
+}
+
+.header-online-status-text{
+    font-family: 'PTSansCaption-Regular';
+    font-size: 20px;
+
+    margin-right: 28px;
+
+    color: #008000;
+}
+
+@media screen and (max-width:1475px) {
+    .header-online-status-text{
+        display: none;
+    }
+
+    .header-online-status{
+        margin-right: 28px;
+    }
+}
+
+.header-settings-link{
+    width: 30px;
+    height: 30px;
+
+    margin-right: 28px;
+}
+
+@media screen and (max-width:888px) {
+    .header *:not(.header-logo-img){
+        padding-top: 5px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+    }
+
+    .header-logo-text{
+        margin-left: 28px;
+    }
+}
+
+
+.main{
+    display: inline-block;
+    min-width: 427px;
+    width: 100%;
+
+    padding-bottom: 45px;
+
+    background-color: white;
+    border-radius: 30px;
+}
+
+.main-content{
+    padding-top: 35px;
+    padding-left: 50px;
+}
+
+.main-title{
+    display: block;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 24px;
+
+    margin-bottom: 30px;
+
+    color: #008000;
+}
+
+.main-separator{
+    display: block;
+    width: 75%;
+    height: 2px;
+
+    margin-bottom: 30px;
+
+    background-color: #008000;
+}
+
+.main-subtitle-text{
+    display: inline-block;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 24px;
+
+    margin-bottom: 30px;
+
+    color: #008000;
+}
+
+.main-subtitle-text:last-child{
+    margin-left: 40%;
+}
+
+.main-device-settings{
+    display: inline-block;
+    vertical-align: top;
+
+    width: 48%;
+}
+
+.main-data-send-settings{
+    display: inline-block;
+    vertical-align: top;
+
+    width: 48%;
+}
+
+@media screen and (max-width:950px) {
+    .main-device-settings{
+        display: block;
+
+        margin-bottom: 40px;
+    }
+    .main-data-send-settings{
+        display: block;
+    }
+}
+
+.setting-input-block:not(:last-child){
+    margin-bottom: 30px;
+}
+.setting-input-title-block{
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.setting-input-input{
+    display: inline-block;
+    vertical-align: middle;
+
+    padding-left: 27px;
+    padding-right: 27px;
+
+    width: 260px;
+    height: 45px;
+
+    border-radius: 30px;
+    border: #BFBFBF solid 2px;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 20px;
+}
+
+@media screen and (max-width:1700px) {
+    .setting-input-title-block, .setting-input-input{
+        display: block;
+
+        margin-top: 10px;
+        margin-left: 0 !important;
+    }
+
+    .main-buttons{
+        margin-top: 20px;
+    }
+}
+
+#deviceName{
+    margin-left: 10%;
+}
+
+#groundHumidity{
+    margin-left: 7.3%;
+}
+
+#groundTemp{
+    margin-left: 4%;
+}
+
+#airHumidity{
+    margin-left: 5%;
+}
+
+#airTemp{
+    margin-left: 1.5%;
+}
+
+#wifiSSID{
+    margin-left: 5%;
+}
+
+#wifiPass{
+    margin-left: 5%;
+}
+
+#regularUpdate{
+    margin-left: 5%;
+}
+
+.setting-input-title{
+    display: block;
+    font-family: 'PTSansCaption-Regular';
+    font-size: 24px;
+
+    margin-bottom: 3px;
+
+    color: #008000;
+}
+
+.setting-input-subtitle{
+    display: block;
+    font-family: 'PTSansCaption-Regular';
+    font-size: 14px;
+
+    color: #008000;
+}
+
+.setting-regular-update-list-item{
+    display: inline-block;
+}
+
+.setting-regular-update-item-text{
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+
+    color: #008000;
+}
+
+.setting-regular-update-list-item:not(:last-child){
+    margin-right: 45px;
+}
+
+.regular-update-input{
+    display: inline-block;
+
+    cursor: pointer;
+    position: relative;
+
+    padding-left: 25px;
+    margin-right: 10px;
+
+    font-size: 13px;
+}
+
+.main-information{
+    display: block;
+    font-family: 'PTSansCaption-Regular';
+    font-size: 14px;
+
+    color: #008000;
+}
+
+.main-information-big{
+    display: block;
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+
+    color: #008000;
+}
+
+.main-buttons{
+    text-align: right;
+
+    margin-right: 60px;
+}
+
+.main-buttons-information{
+    text-align: right;
+
+    margin-right: 30px;
+}
+
+.main-buttons div,button *{
+    display: inline-block;
+
+    vertical-align: middle;
+}
+
+.button-cancel{
+    height: 46px;
+    width: 146px;
+
+    margin-right: 20px;
+
+    border-radius: 30px;
+    border: #008000 solid 2px;
+    background-color: white;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+    color: #008000;
+
+    cursor: pointer;
+}
+
+.button-save{
+    height: 46px;
+    width: 146px;
+
+    border-radius: 30px;
+    border: none;
+    background-color: #008000;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+    color: white;
+
+    cursor: pointer;
+}
+
+@media screen and (max-width:1320px) {
+    .main-buttons div,button *{
+        display: block;
+    }
+
+    .main-buttons-information{
+        margin-bottom: 20px;
+    }
+}
+
