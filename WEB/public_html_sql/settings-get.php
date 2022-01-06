@@ -1,64 +1,52 @@
 <?php
+// Future libraries
+function mysql_outputElement($link, $table, $id, $element){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "SELECT ".$element." FROM ".$table." WHERE id = ".$id;
+
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+
+    return ($data[0])[$element];
+}
+
+function mysql_updateElement($link, $table, $id, $element, $value){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "UPDATE ".$table." SET ".$element." = '".$value."' WHERE id = ".$id;
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+
+    return $result;
+}
+// End libraries
 
 $id = ($_GET['id']);
 
-if ($id == '000001') {
-    $deviceNameSetJson = file_get_contents('json/settings/deviceName.json');
-    $deviceNameSet = json_decode($deviceNameSetJson, true);
+$host = 'localhost';
+$user = 'root';
+$password = 'kirillKhokhlov69Kvantorium';
+$db_name = 'smart-garden';
+$table = 'data';
 
-    echo '<div>';
-    echo $deviceNameSet;
-    echo '</div>';
+$link = mysqli_connect($host, $user, $password, $db_name);
 
-    $airTempSetJson = file_get_contents('json/settings/airTemp.json');
-    $airTempSet = json_decode($airTempSetJson, true);
+    $deviceNameSet = mysql_outputElement($link, $table, $id, 'deviceNameSet');
 
-    echo '<div>';
-    echo $airTempSet;
-    echo '</div>';
+    $airTempSet = mysql_outputElement($link, $table, $id, 'airTempSet');
 
-    $airHumiditySetJson = file_get_contents('json/settings/airHumidity.json');
-    $airHumiditySet = json_decode($airHumiditySetJson, true);
+    $airHumiditySet = mysql_outputElement($link, $table, $id, 'airHumiditySet');
 
-    echo '<div>';
-    echo $airHumiditySet;
-    echo '</div>';
+    $groundTempSet = mysql_outputElement($link, $table, $id, 'groundTempSet');
 
-    $groundTempSetJson = file_get_contents('json/settings/groundTemp.json');
-    $groundTempSet = json_decode($groundTempSetJson, true);
+    $groundHumiditySet = mysql_outputElement($link, $table, $id, 'groundHumiditySet');
 
-    echo '<div>';
-    echo $groundTempSet;
-    echo '</div>';
+    $wifiSSIDSet = mysql_outputElement($link, $table, $id, 'wifiSSIDSet');
 
-    $groundHumiditySetJson = file_get_contents('json/settings/groundHumidity.json');
-    $groundHumiditySet = json_decode($groundHumiditySetJson, true);
+    $wifiPassSet = mysql_outputElement($link, $table, $id, 'wifiPassSet');
 
-    echo '<div>';
-    echo $groundHumiditySet;
-    echo '</div>';
+    $regularUpdateSet = mysql_outputElement($link, $table, $id, 'regularUpdateSet');
 
-    $wifiSSIDSetJson = file_get_contents('json/settings/wifiSSID.json');
-    $wifiSSIDSet = json_decode($wifiSSIDSetJson, true);
-
-    echo '<div>';
-    echo $wifiSSIDSet;
-    echo '</div>';
-
-    $wifiPassSetJson = file_get_contents('json/settings/wifiPass.json');
-    $wifiPassSet = json_decode($wifiPassSetJson, true);
-
-    echo '<div>';
-    echo $wifiPassSet;
-    echo '</div>';
-
-    $regularUpdateSetJson = file_get_contents('json/settings/regularUpdate.json');
-    $regularUpdateSet = json_decode($regularUpdateSetJson, true);
-
-    echo '<div>';
-    echo $regularUpdateSet;
-    echo '</div>';
-} else {
-    echo 'error1';
-}
+    $settings = array($deviceNameSet, $groundHumiditySet, $groundTempSet, $airHumiditySet, $airTempSet, $wifiSSIDSet, $wifiSSIDSet, $regularUpdateSet);
+    echo json_encode($settings, JSON_FORCE_OBJECT);
 ?>

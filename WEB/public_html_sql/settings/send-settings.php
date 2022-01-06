@@ -1,5 +1,36 @@
 <?php
-$id = ($_GET['id']);
+// Future libraries
+function mysql_outputElement($link, $table, $id, $element){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "SELECT ".$element." FROM ".$table." WHERE id = ".$id;
+
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+
+    return ($data[0])[$element];
+}
+
+function mysql_updateElement($link, $table, $id, $element, $value){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "UPDATE ".$table." SET ".$element." = '".$value."' WHERE id = ".$id;
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+
+    return $result;
+}
+// End libraries
+session_start();
+
+$host = 'localhost';
+$user = 'root';
+$password = 'kirillKhokhlov69Kvantorium';
+$db_name = 'smart-garden';
+$table = 'data';
+
+$link = mysqli_connect($host, $user, $password, $db_name);
+
+$id = $_SESSION['id'];
 $airTempSet = ($_GET['airTemp']);
 $airHumiditySet = ($_GET['airHumidity']);
 $groundTempSet = ($_GET['groundTemp']);
@@ -9,32 +40,35 @@ $wifiSSIDSet = ($_GET['wifiSSID']);
 $wifiPassSet = ($_GET['wifiPass']);
 $regularUpdateSet = ($_GET['regularUpdate']);
 
-if ($id == '000001') {
+if ($id == ""){
+    header("Location: /");
+  }
+
     if ($airTempSet != ''){
-        file_put_contents('../json/settings/airTemp.json', json_encode($airTempSet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'airTempSet', $airTempSet);
     }
     if ($airHumiditySet != ''){
-        file_put_contents('../json/settings/airHumidity.json', json_encode($airHumiditySet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'airHumiditySet', $airHumiditySet);
     }
     if ($groundTempSet != ''){
-        file_put_contents('../json/settings/groundTemp.json', json_encode($groundTempSet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'groundTempSet', $groundTempSet);
     }
     if ($groundHumiditySet != ''){
-        file_put_contents('../json/settings/groundHumidity.json', json_encode($groundHumiditySet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'groundHumiditySet', $groundHumiditySet);
     }
     if ($deviceNameSet != ''){
-        file_put_contents('../json/settings/deviceName.json', json_encode($deviceNameSet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'deviceNameSet', $deviceNameSet);
     }
     if ($wifiSSIDSet != ''){
-        file_put_contents('../json/settings/wifiSSID.json', json_encode($wifiSSIDSet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'wifiSSIDSet', $wifiSSIDSet);
     }
     if ($wifiPassSet != ''){
-        file_put_contents('../json/settings/wifiPass.json', json_encode($wifiPassSet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'wifiPassSet', $wifiPassSet);
     }
     if ($regularUpdateSet != ''){
-        file_put_contents('../json/settings/regularUpdate.json', json_encode($regularUpdateSet, JSON_FORCE_OBJECT));
+        mysql_updateElement($link, $table, $id, 'regularUpdateSet', $regularUpdateSet);
     }
-}
 
-echo '<meta http-equiv="refresh" content="0;URL=settings-success.php">';
+
+header("Location: settings-success.php");
 ?>

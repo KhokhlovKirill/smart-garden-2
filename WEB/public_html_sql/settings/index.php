@@ -1,58 +1,63 @@
 <?php
+// Future libraries
+function mysql_outputElement($link, $table, $id, $element){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "SELECT ".$element." FROM ".$table." WHERE id = ".$id;
+
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+
+    return ($data[0])[$element];
+}
+
+function mysql_updateElement($link, $table, $id, $element, $value){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "UPDATE ".$table." SET ".$element." = '".$value."' WHERE id = ".$id;
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+
+    return $result;
+}
+// End libraries
+session_start();
+$id = $_SESSION['id'];
+
+if ($id == ""){
+  header("Location: /");
+}
+
 header('Content-type: text/html; charset=utf-8');
 
-$airTempJson = file_get_contents('../json/airTemp.json');
-$airTemp = json_decode($airTempJson, true);
+$host = 'localhost';
+$user = 'root';
+$password = 'kirillKhokhlov69Kvantorium';
+$db_name = 'smart-garden';
+$table = 'data';
 
-$airHumidityJson = file_get_contents('../json/airHumidity.json');
-$airHumidity = json_decode($airHumidityJson, true);
+$link = mysqli_connect($host, $user, $password, $db_name);
 
-$groundTempJson = file_get_contents('../json/groundTemp.json');
-$groundTemp = json_decode($groundTempJson, true);
-
-$groundHumidityJson = file_get_contents('../json/groundHumidity.json');
-$groundHumidity = json_decode($groundHumidityJson, true);
-
-$idJson = file_get_contents('../json/id.json');
-$id = json_decode($idJson, true);
-
-$deviceNameJson = file_get_contents('../json/deviceName.json');
-$deviceName = json_decode($deviceNameJson, true);
-
-$notificationJson = file_get_contents('../json/notification.json');
-$notification = json_decode($notificationJson, true);
-
-$onlineStatusJson = file_get_contents('../json/onlineStatus.json');
-$onlineStatus = json_decode($onlineStatusJson, true);
+$deviceName = mysql_outputElement($link, $table, $id, 'deviceName');
 
 // Получение настроек
-$deviceNameSetJson = file_get_contents('../json/settings/deviceName.json');
-$deviceNameSet = json_decode($deviceNameSetJson, true);
+$deviceNameSet = mysql_outputElement($link, $table, $id, 'deviceNameSet');
 
-$airTempSetJson = file_get_contents('../json/settings/airTemp.json');
-$airTempSet = json_decode($airTempSetJson, true);
+$airTempSet = mysql_outputElement($link, $table, $id, 'airTempSet');
 
-$airHumiditySetJson = file_get_contents('../json/settings/airHumidity.json');
-$airHumiditySet = json_decode($airHumiditySetJson, true);
+$airHumiditySet = mysql_outputElement($link, $table, $id, 'airHumiditySet');
 
-$groundTempSetJson = file_get_contents('../json/settings/groundTemp.json');
-$groundTempSet = json_decode($groundTempSetJson, true);
+$groundTempSet = mysql_outputElement($link, $table, $id, 'groundTempSet');
 
-$groundHumiditySetJson = file_get_contents('../json/settings/groundHumidity.json');
-$groundHumiditySet = json_decode($groundHumiditySetJson, true);
+$groundHumiditySet = mysql_outputElement($link, $table, $id, 'groundHumiditySet');
 
-$wifiSSIDSetJson = file_get_contents('../json/settings/wifiSSID.json');
-$wifiSSIDSet = json_decode($wifiSSIDSetJson, true);
+$wifiSSIDSet = mysql_outputElement($link, $table, $id, 'wifiSSIDSet');
 
-$wifiPassSetJson = file_get_contents('../json/settings/wifiPass.json');
-$wifiPassSet = json_decode($wifiPassSetJson, true);
+$wifiPassSet = mysql_outputElement($link, $table, $id, 'wifiPassSet');
 
-$regularUpdateSetJson = file_get_contents('../json/settings/regularUpdate.json');
-$regularUpdateSet = json_decode($regularUpdateSetJson, true);
+$regularUpdateSet = mysql_outputElement($link, $table, $id, 'regularUpdateSet');
 //________________
 
-$updateDateJson = file_get_contents('../json/updateDate.json');
-$updateDate = json_decode($updateDateJson, true);
+$updateDate = mysql_outputElement($link, $table, $id, 'updateTime');
 $currentTime = new \DateTime('now');
 $updateTimeSeconds = ($currentTime->getTimestamp() - $updateDate);
 
@@ -146,7 +151,11 @@ if ($updateTimeSeconds < 60) {
         }
 
         function cancel(){
-            window.location.href = '/';
+          window.location.href = '/control-center.php';
+        }
+
+        function userSettings(){
+          window.location.href = '/settings/user-settings.php';
         }
     </script>
   </head>
@@ -187,19 +196,24 @@ if ($updateTimeSeconds < 60) {
             <span class="header-online-status-text" id="updateTime">(Обновление: <?= $updateTime ?> <?= $unitTime ?> назад)</span>
           </div>
           <span class="header-separator"></span>
-          <a href="/" class="header-settings-link"
+          <a onclick="cancel();" style="cursor: pointer" class="header-settings-link"
             ><img
               class="header-settings-icon"
               src="../img/back.svg"
               alt="Настройки"
           /></a>
+            <span class="header-separator"></span>
+            <img src="../img/exit.svg" class="header-settings-icon" onclick="exit();" style="width: 32px; height: 32px; cursor: pointer">
         </div>
       </div>
     
       <div class="down-part">
         <div class="main">
           <div class="main-content">
+            <div class="main-header">
             <span class="main-title">Настройки</span>
+            <button class="main-button-user-settings" onclick="userSettings();">Настройки аккаунта</button>
+            </div>
             <span class="main-separator"></span>
             <div class="main-down">
             <div class="main-device-settings">
@@ -302,5 +316,9 @@ if ($updateTimeSeconds < 60) {
     onlineIndicator.style.fill = "red";
     onlineStatusText.style.color = "red";
     updateTime.style.color = "red";
+  }
+
+  function exit(){
+      window.location.href = '/exit.php';
   }
 </script>

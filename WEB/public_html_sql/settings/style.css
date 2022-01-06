@@ -194,15 +194,39 @@ body{
     padding-left: 50px;
 }
 
+.main-header{
+}
+
 .main-title{
-    display: block;
+    display: inline-block;
 
     font-family: 'PTSansCaption-Regular';
     font-size: 24px;
 
     margin-bottom: 30px;
+    margin-right: 30px;
 
     color: #008000;
+}
+
+.main-button-user-settings{
+    display: inline-block;
+
+    height: 46px;
+    width: 250px;
+
+    margin-right: 20px;
+    margin-bottom: 20px;
+
+    border-radius: 30px;
+    border: #008000 solid 2px;
+    background-color: white;
+
+    font-family: 'PTSansCaption-Regular';
+    font-size: 18px;
+    color: #008000;
+
+    cursor: pointer;
 }
 
 .main-separator{

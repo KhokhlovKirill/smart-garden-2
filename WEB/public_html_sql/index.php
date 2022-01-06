@@ -1,215 +1,225 @@
 <?php
-header('Content-type: text/html; charset=utf-8');
+session_start();
 
-$airTempJson = file_get_contents('json/airTemp.json');
-$airTemp = json_decode($airTempJson, true);
-
-$airHumidityJson = file_get_contents('json/airHumidity.json');
-$airHumidity = json_decode($airHumidityJson, true);
-
-$groundTempJson = file_get_contents('json/groundTemp.json');
-$groundTemp = json_decode($groundTempJson, true);
-
-$groundHumidityJson = file_get_contents('json/groundHumidity.json');
-$groundHumidity = json_decode($groundHumidityJson, true);
-
-$idJson = file_get_contents('json/id.json');
-$id = json_decode($idJson, true);
-
-$deviceNameJson = file_get_contents('json/deviceName.json');
-$deviceName = json_decode($deviceNameJson, true);
-
-$notificationJson = file_get_contents('json/notification.json');
-$notification = json_decode($notificationJson, true);
-
-$onlineStatusJson = file_get_contents('json/onlineStatus.json');
-$onlineStatus = json_decode($onlineStatusJson, true);
-
-$updateDateJson = file_get_contents('json/updateDate.json');
-$updateDate = json_decode($updateDateJson, true);
-$currentTime = new \DateTime('now');
-$updateTimeSeconds = ($currentTime->getTimestamp() - $updateDate);
-
-if ($updateTimeSeconds < 300){
-    $onlineStatus = 'Онлайн';
+if (empty($_SESSION['login']) or empty($_SESSION['id'])) {
 } else {
-    $onlineStatus = 'Офлайн';
+    header('Location: /control-center.php');
 }
 
-if ($updateTimeSeconds < 60) {
-    $updateTime = $updateTimeSeconds;
-    $unitTime = "секунд";
-} if ($updateTimeSeconds > 60) {
-    $updateTime = intval($updateTimeSeconds / 60);
-    $unitTime = "минут";
-} if ($updateTimeSeconds > 3600) {
-    $updateTime = intval($updateTimeSeconds / 3600);
-    $unitTime = "часов";
-} if ($updateTimeSeconds > 86400) {
-    $updateTime = intval($updateTimeSeconds / 86400);
-    $unitTime = "дней";
-} if ($updateTimeSeconds > 604800) {
-    $updateTime = intval($updateTimeSeconds / 604800);
-    $unitTime = "недели";
-} if ($updateTimeSeconds > 2592000) {
-    $updateTime = intval($updateTimeSeconds / 2592000);
-    $unitTime = "месяцев";
-} if ($updateTimeSeconds > 31536000) {
-    $updateTime = intval($updateTimeSeconds / 31536000);
-    $unitTime = "лет";
+switch ($_GET['errorCode']){
+    case 0:
+        $notification = '';
+        $notificationDisplay = 'none';
+        break;
+    case 1:
+        $notification = 'Неверный ID или пароль';
+        $notificationDisplay = 'block';
+        break;
+    case 2:
+        $notification = 'Заполните все поля';
+        $notificationDisplay = 'block';
 }
-
-$wifiJson = file_get_contents('json/wifi.json');
-$wifi = json_decode($wifiJson, true);
 ?>
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-  <head class="head">
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="icon" href="favicon.ico">
-    <link rel="icon" href="img/favicons/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="img/favicons/apple.png">
-    <link rel="manifest" href="manifest.webmanifest">
+<head class="head">
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Центр управления Smart Garden"/>
+    <link rel="stylesheet" href="../settings/style.css"/>
+    <link rel="icon" href="../favicon.ico">
+    <link rel="icon" href="../img/favicons/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="../img/favicons/apple.png">
+    <link rel="manifest" href="../manifest.webmanifest">
     <title>Smart Garden</title>
-  </head>
 
-  <body class="body">
-    <div class="container">
-      <div class="header">
-        <div class="header-content">
-          <div class="header-logo">
-            <img
-              src="img/leaf.svg"
-              alt="Smart Garden"
-              class="header-logo-img"
-            />
-            <span class="header-logo-text">Smart Garden</span>
-          </div>
-          <span class="header-separator"></span>
-          <div class="header-device">
-            <span class="header-device-name"><?= $deviceName ?></span>
-            <span class="header-device-id">(id: <?= $id ?>)</span>
-          </div>
-          <span class="header-separator"></span>
+    <script>
+        function login() {
+            const id = document.getElementById('id').value;
+            const password = document.getElementById('password').value;
 
-          <div class="header-online">
-            <svg
-              class="header-online-indicator"
-              id="onlineIndicator"
-              width="9"
-              height="9"
-              viewBox="0 0 9 9"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="4.5" cy="4.5" r="4.5"/>
-            </svg>
+            window.location.href = '/control-center.php?id=' + id;
+        }
 
-            <span class="header-online-status" id="onlineStatusText"><?= $onlineStatus ?></span>
-            <span class="header-online-status-text" id="updateTime">(Обновление: <?= $updateTime ?> <?= $unitTime ?> назад)</span>
-          </div>
-          <span class="header-separator"></span>
-          <a href="/settings" class="header-settings-link"
-            ><img
-              class="header-settings-icon"
-              src="img/settings.svg"
-              alt="Настройки"
-          /></a>
-        </div>
-      </div>
-
-      <div class="down-part">
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="down-part">
         <div class="main">
             <div class="main-content">
-                <div class="main-ground">
-                    <span class="main-title">Почва</span>
-                    <span class="main-separator"></span>
-
-                    <div class="main-ground-data">
-                        <div class="main-data">
-                            <img class="main-icon" src="img/drop.svg" alt="Влажность">
-                            <span class="main-value"><?= $groundHumidity ?> %</span>
-                            <img src="" alt="" class="main-charts">
-                        </div>
-                        <div class="main-data">
-                            <img class="main-icon" src="img/temperature.svg" alt="Температура">
-                            <span class="main-value"><?= $groundTemp ?> °C</span>
-                            <img src="" alt="" class="main-charts">
-                        </div>
-                    </div>
+                <div class="header-logo">
+                    <img
+                            src="../img/leaf.svg"
+                            alt="Smart Garden"
+                            class="header-logo-img"
+                    />
+                    <span class="header-logo-text">Smart Garden</span>
                 </div>
-                <div class="main-air">
-                    <span class="main-title">Воздух</span>
-                    <span class="main-separator"></span>
-
-                    <div class="main-air-data">
-                        <div class="main-data">
-                            <img class="main-icon" src="img/drop.svg" alt="Влажность">
-                            <span class="main-value"><?= $airHumidity ?> %</span>
-                            <img src="" alt="" class="main-charts">
-                        </div>
-                        <div class="main-data">
-                            <img class="main-icon" src="img/temperature.svg" alt="Температура">
-                            <span class="main-value"><?= $airTemp ?> °C</span>
-                            <img src="" alt="" class="main-charts">
-                        </div>
+                <form action="testreg.php" method="post">
+                    <h1 class="settings-success-title">Вход в центр управления</h1>
+                    <div class="error-notification">
+                        <span class="error-notification-text"><?= $notification ?></span>
                     </div>
-                </div>
+                    <div class="settings-success-subtitle">ID устройства</div>
+                    <input type="text" name="login" maxlength="21" class="id" id="id">
+                    <div class="settings-success-subtitle">Пароль</div>
+                    <input type="password" name="password" maxlength="21" class="password" id="password">
+            <input type="submit" name="submit" class="settings-success-button-to-home" id="button" value="Войти">
+            </form>
             </div>
         </div>
-        <div class="notification">
-          <div class="notification-content">
-            <div class="notification-notification">
-              <span class="notification-title">Уведомления</span>
-              <div class="notification-message-box" id="errorMessageBox">
-              <span class="notification-message" id="errorMessage"><?= $notification ?></span>
-              </div>
-            </div>
-            <span class="notification-separator"></span>
-            <div class="notification-wifi">
-              <span class="notification-title">Wi-Fi</span>
-              <div class="notification-wifi-content">
-              <img src="img/wifi.svg" alt="" class="notification-wifi-icon">
-              <span class="notification-wifi-ssid"><?= $wifi ?></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </body>
+</div>
+</body>
 </html>
 
-<script>
-  var onlineStatus = window.document.querySelector(".header-online-status").innerHTML;
-  
-  if (onlineStatus == "Онлайн"){
-    onlineIndicator.style.fill = "#008000";
-    onlineStatusText.style.color = "#008000";
-    updateTime.style.color = "#008000";
-  } else {
-    onlineIndicator.style.fill = "red";
-    onlineStatusText.style.color = "red";
-    updateTime.style.color = "red";
-  }
+<style>
+    .main {
+        display: block;
+        min-width: 480px;
+        width: 30%;
+        padding-bottom: 45px;
+        background-color: white;
+        border-radius: 30px;
 
-  var notification = window.document.querySelector(".notification-message").innerHTML;
-  
-  if (notification == "Уведомления отсутствуют"){
-    errorMessageBox.style.backgroundColor = "#008000";
-  } else {
-    errorMessageBox.style.backgroundColor = "#E75C5C";
-  }
-  
-    var notification = window.document.querySelector(".notification-message").innerHTML;
-  
-  if (notification == "Уведомления отсутствуют"){
-    errorMessageBox.style.backgroundColor = "#008000";
-  } else {
-    errorMessageBox.style.backgroundColor = "#E75C5C";
-  }
-</script>
+        margin-top: 17vh;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @media screen and (max-width: 781px) {
+        .container {
+            margin: 0;
+        }
+    }
+
+    .header-logo {
+        text-align: center;
+
+        margin-bottom: 40px;
+    }
+
+    .header-logo * {
+        vertical-align: middle;
+    }
+
+    .main-content {
+        margin-right: 50px;
+    }
+
+    .settings-success-title {
+        text-align: center;
+
+        margin-bottom: 35px;
+        font-family: 'PTSansCaption-Regular';
+        font-size: 30px;
+        color: #008000;
+    }
+
+    .error-notification{
+        display: <?= $notificationDisplay ?>;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 30px;
+
+        padding: 10px;
+        padding-left: 27px;
+        padding-right: 27px;
+
+        width: 260px;
+        min-height: 31px;
+
+        border-radius: 30px;
+
+        background-color: #E75C5C;
+
+        font-family: 'PTSansCaption-Regular';
+        font-size: 18px;
+        color: white;
+    }
+
+    .error-notification-text{
+        display: block;
+
+        padding-top: 3px;
+
+        text-align: center;
+    }
+
+    .settings-success-subtitle {
+        text-align: center;
+
+        margin-bottom: 25px;
+
+        font-family: 'PTSansCaption-Regular';
+        font-size: 24px;
+        color: #008000;
+    }
+
+    .id {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 30px;
+
+        padding-left: 27px;
+        padding-right: 27px;
+        width: 260px;
+        height: 45px;
+        border-radius: 30px;
+        border: #BFBFBF solid 2px;
+        font-family: 'PTSansCaption-Regular';
+        font-size: 20px;
+    }
+
+    .password {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+
+        padding-left: 27px;
+        padding-right: 27px;
+        width: 260px;
+        height: 45px;
+        border-radius: 30px;
+        border: #BFBFBF solid 2px;
+        font-family: 'PTSansCaption-Regular';
+        font-size: 20px;
+    }
+
+    .settings-success-button-to-home {
+        display: block;
+
+        min-height: 55px;
+
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 60px;
+
+        padding-top: 10px;
+        padding-bottom: 10px;
+        padding-left: 25px;
+        padding-right: 25px;
+
+        border: none;
+        border-radius: 30px;
+
+        background-color: #008000;
+
+        font-family: 'PTSansCaption-Regular';
+        font-size: 24px;
+        color: white;
+
+        cursor: pointer;
+    }
+</style>
+<?php
+// Проверяем, пусты ли переменные логина и id пользователя
+if (empty($_SESSION['login']) or empty($_SESSION['id'])) {
+} else {
+    echo '<meta http-equiv="refresh" content="0;URL=control-center.php">';
+}
+?>

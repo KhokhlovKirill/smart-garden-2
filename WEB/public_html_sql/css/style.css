@@ -25,6 +25,9 @@
          url('../fonts/PTSansCaption-Bold.eot') format('eot');
   }
   
+a{
+    text-decoration: none;
+}
 
 body{
     background-image: url(../img/background-image.jpg);
@@ -56,6 +59,9 @@ body{
 .header-content{
     display: block;
     text-align: center;
+
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 
@@ -154,7 +160,7 @@ body{
     margin-right: 28px;
 }
 
-@media screen and (max-width:888px) {
+@media screen and (max-width:1155px) {
     .header *:not(.header-logo-img){
         padding-top: 5px;
         padding-bottom: 10px;
@@ -171,7 +177,9 @@ body{
     display: inline-block;
     min-width: 415px;
     width: 54.07%;
-    height: 669px;
+    min-height: 669px;
+
+    padding-bottom: 30px;
 
     background-color: white;
     border-radius: 30px;
@@ -227,8 +235,8 @@ body{
     font-size: 55px;
 }
 
-.main-charts{
-    max-width: 45%;
+.main-chart{
+    width: 40%;
     height: 75px;
 
     margin-left: 25px;
@@ -241,7 +249,7 @@ body{
     vertical-align: top;
     min-width: 400px;
     width: 38.00%;
-    height: 401px;
+    min-height: 401px;
 
     margin-left: 7%;
 
@@ -249,7 +257,7 @@ body{
     border-radius: 30px;
 }
 
-@media screen and (max-width:1240px) {
+@media screen and (max-width:1400px) {
     .notification{
         display: block;
         width: 100%;
@@ -260,11 +268,18 @@ body{
     .main{
         width: 100%;
     }
+
+    .main-chart{
+        display: block;
+
+        width: 85%;
+    }
 }
 
 .notification-content{
     padding-top: 35px;
     padding-left: 50px;
+    padding-bottom: 60px;
 }
 
 .notification-title{

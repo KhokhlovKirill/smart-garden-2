@@ -1,32 +1,48 @@
 <?php
+// Future libraries
+function mysql_outputElement($link, $table, $id, $element){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "SELECT ".$element." FROM ".$table." WHERE id = ".$id;
+
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+
+    return ($data[0])[$element];
+}
+
+function mysql_updateElement($link, $table, $id, $element, $value){
+    mysqli_query($link, "SET NAMES 'utf8'");
+
+    $query = "UPDATE ".$table." SET ".$element." = '".$value."' WHERE id = ".$id;
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));
+
+    return $result;
+}
+// End libraries
+
+session_start();
+$id = $_SESSION['id'];
+
+if ($id == ""){
+    header("Location: /");
+  }
+  
 header('Content-type: text/html; charset=utf-8');
 
-$airTempJson = file_get_contents('../json/airTemp.json');
-$airTemp = json_decode($airTempJson, true);
+$host = 'localhost';
+$user = 'root';
+$password = 'kirillKhokhlov69Kvantorium';
+$db_name = 'smart-garden';
+$table = 'data';
 
-$airHumidityJson = file_get_contents('../json/airHumidity.json');
-$airHumidity = json_decode($airHumidityJson, true);
+$link = mysqli_connect($host, $user, $password, $db_name);
 
-$groundTempJson = file_get_contents('../json/groundTemp.json');
-$groundTemp = json_decode($groundTempJson, true);
+header('Content-type: text/html; charset=utf-8');
 
-$groundHumidityJson = file_get_contents('../json/groundHumidity.json');
-$groundHumidity = json_decode($groundHumidityJson, true);
+$deviceName = mysql_outputElement($link, $table, $id, 'deviceName');
+$updateDate = mysql_outputElement($link, $table, $id, 'updateTime');
 
-$idJson = file_get_contents('../json/id.json');
-$id = json_decode($idJson, true);
-
-$deviceNameJson = file_get_contents('../json/deviceName.json');
-$deviceName = json_decode($deviceNameJson, true);
-
-$notificationJson = file_get_contents('../json/notification.json');
-$notification = json_decode($notificationJson, true);
-
-$onlineStatusJson = file_get_contents('../json/onlineStatus.json');
-$onlineStatus = json_decode($onlineStatusJson, true);
-
-$updateDateJson = file_get_contents('../json/updateDate.json');
-$updateDate = json_decode($updateDateJson, true);
 $currentTime = new \DateTime('now');
 $updateTimeSeconds = ($currentTime->getTimestamp() - $updateDate);
 
@@ -81,6 +97,10 @@ if ($updateTimeSeconds < 60) {
         function toSettings(){
             window.location.href = '/settings';
         }
+
+        function exit(){
+            window.location.href = '/exit.php';
+        }
     </script>
 </head>
 <body>
@@ -125,6 +145,8 @@ if ($updateTimeSeconds < 60) {
                     src="../img/back.svg"
                     alt="Настройки"
                 /></a>
+            <span class="header-separator"></span>
+            <img src="../img/exit.svg" class="header-settings-icon" onclick="exit();" style="width: 32px; height: 32px; cursor: pointer">
         </div>
     </div>
     <div class="down-part">
