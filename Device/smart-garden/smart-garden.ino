@@ -1,7 +1,9 @@
+#include <ArduinoJson.h>
 #include <SoftwareSerial.h>
 #include <LiquidCrystal.h>
 #include <TroykaDHT.h>
-#include <EncButton.h>
+#include <GyverButton.h>
+#include <EEPROM.h>
 
 #define DHT_PIN 7
 
@@ -14,7 +16,49 @@
 String AP = "Poco";
 String PASS = "esp82668";
 
-const char id[] = "1";
+// Пресеты
+const char *namesPreset[] = {
+    "B\273a\264o\273\306\262\270\263\303e",               // 0
+    "C\263e\277o\273\306\262\270\263\303e",               // 1
+    "Te\276\273o\273\306\262\270\263\303e",               // 2
+    "Te\276\273oc\263e\277o\273\306\262\270\263\303e",    // 3
+    "B\273a\264o\277e\276\273o\273\306\262\270\263\303e", // 4
+    "He\276p\270xo\277\273\270\263\303e",                 // 5
+};
+
+// Значения пресетов
+// Пресет 1
+const byte groundHumidityPreset1 = 0;
+const byte groundTempPreset1 = 0;
+const byte airHumidityPreset1 = 0;
+const byte airTempPreset1 = 0;
+//_____________
+
+// Пресет 2
+const byte groundHumidityPreset2 = 0;
+const byte groundTempPreset2 = 0;
+const byte airHumidityPreset2 = 0;
+const byte airTempPreset2 = 0;
+//_____________
+
+// Пресет 3
+const byte groundHumidityPreset3 = 0;
+const byte groundTempPreset3 = 0;
+const byte airHumidityPreset3 = 0;
+const byte airTempPreset3 = 0;
+//_____________
+
+// Пресет 4
+const byte groundHumidityPreset4 = 0;
+const byte groundTempPreset4 = 0;
+const byte airHumidityPreset4 = 0;
+const byte airTempPreset4 = 0;
+//_____________
+
+//___________________________
+//_________________________________________
+
+const int id = 1;
 String deviceName = "Smart Garden";
 byte regularUpdate = 1;
 
@@ -22,11 +66,13 @@ byte groundHumidity = 0;
 float groundTemp = 0;
 byte airHumidity = 0;
 float airTemp = 0;
+byte lighting = 0;
 
 byte groundHumiditySet = 0;
 float groundTempSet = 0;
 byte airHumiditySet = 0;
 float airTempSet = 0;
+char notificationCode[4] = {"0000"};
 
 int countTimeCommand;
 
@@ -76,6 +122,41 @@ byte lamp[8] = { // Лампочка
 
 };
 //________________________________________
+
+String outputDataFromString(String text, char firstChar, char secondChar, bool json = true)
+{
+  byte first, second;
+  String result = "";
+
+  for (int i = 0; i < text.length(); i++)
+  {
+    if (text[i] == firstChar)
+    {
+      first = i;
+    }
+    else if (text[i] == secondChar)
+    {
+      second = i;
+      break;
+    }
+  }
+
+  if (json)
+  {
+    for (int i = first; i <= second; i++)
+    {
+      result = result + text[i];
+    }
+  }
+  else
+  {
+    for (int i = first + 1; i <= second - 1; i++)
+    {
+      result = result + text[i];
+    }
+  }
+  return result;
+}
 
 void makeGetRequest(String host, String url)
 {
@@ -134,26 +215,26 @@ String checkWifiConnection()
 {
   ESP8266.println("AT+CWJAP?");
   String ssid = "Fail";
-  unsigned long currentTimeLocal;
+  unsigned long currentTimeLocal = millis();
   while ((ESP8266.available() == 0) || (millis() - currentTimeLocal) <= 5000)
   {
-  }
-  if (ESP8266.available() > 0)
-  {
-    String replay = ESP8266.readString();
-    if (replay == "No AP")
+    if (ESP8266.available() > 0)
     {
-      return "#no-ap#";
+      String replay = ESP8266.readString();
+      if (replay == "No AP")
+      {
+        return "#no-ap#";
+      }
+      
+      return outputDataFromString(replay, '"', '"', false);
     }
-    //  Извлечь SSID !TODO!
-
-    return ssid;
   }
+  return "ERROR";
 }
 
 void sendData()
 {
-  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity));
+  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity));
 }
 
 void lcdDisplay()
@@ -161,26 +242,32 @@ void lcdDisplay()
   lcd.setCursor(1, 1);
   lcd.write(byte(0));
   lcd.print("-");
-  lcd.print(groundHumidity);
+  lcd.print(airHumidity);
   lcd.print("%");
 
   lcd.setCursor(1, 2);
   lcd.write(byte(1));
   lcd.print("-");
-  lcd.print(airTemp);
+  lcd.print(String(airTemp, 1));
   lcd.print("\x99"
             "C");
 
-  lcd.setCursor(11, 1);
+  lcd.setCursor(1, 3);
   lcd.write(byte(2));
   lcd.print("-");
-  lcd.print(airHumidity);
+  lcd.print(lighting);
+  lcd.print("%");
+
+  lcd.setCursor(11, 1);
+  lcd.write(byte(0));
+  lcd.print("-");
+  lcd.print(groundHumidity);
   lcd.print("%");
 
   lcd.setCursor(11, 2);
   lcd.write(byte(1));
   lcd.print("-");
-  lcd.print(groundTemp);
+  lcd.print(String(groundTemp, 1));
   lcd.print("\x99"
             "C");
 }
@@ -190,6 +277,58 @@ void getValueFromSensors()
   dht.read();
   airTemp = dht.getTemperatureC();
   airHumidity = dht.getHumidity();
+
+  if (groundHumidity < groundHumiditySet - 2)
+  {
+    notificationCode[0] = '1';
+  }
+  else if (groundHumidity > groundHumiditySet + 2)
+  {
+    notificationCode[0] = '2';
+  }
+  else
+  {
+    notificationCode[0] = '0';
+  }
+
+  if (groundTemp < groundTempSet - 2)
+  {
+    notificationCode[1] = '1';
+  }
+  else if (groundTemp > groundTempSet + 2)
+  {
+    notificationCode[1] = '2';
+  }
+  else
+  {
+    notificationCode[1] = '0';
+  }
+
+  if (airHumidity < airHumiditySet - 2)
+  {
+    notificationCode[2] = '1';
+  }
+  else if (airHumidity > airHumiditySet + 2)
+  {
+    notificationCode[2] = '2';
+  }
+  else
+  {
+    notificationCode[2] = '0';
+  }
+
+  if (airTemp < airTempSet - 2)
+  {
+    notificationCode[3] = '1';
+  }
+  else if (airTemp > airTempSet + 2)
+  {
+    notificationCode[3] = '2';
+  }
+  else
+  {
+    notificationCode[3] = '0';
+  }
 }
 
 void setup()
@@ -218,11 +357,13 @@ void setup()
   ESP8266.println("AT+RST"); // Перезагрузка esp8266
 
   wifiConnection();
+  sendData();
 }
 
 void loop()
 {
-  but_enter.tick();
+  but_enter.tick(); // Принудительное считывание значения с кнопки Enter
+
   if (millis() - currentTime[0] > 10000)
   {
     currentTime[0] = millis();
@@ -237,19 +378,126 @@ void loop()
     sendData();
   }
 
-  switch (but_enter.getClicks())
+  if (but_enter.hasClicks())
   {
-  case 1:
-    menuSettings();
-    break;
+    switch (but_enter.getClicks())
+    {
+    case 1:
+      menuSettings(false);
+      break;
 
-  case 2:
-    menuPresets();
-    break;
+    case 2:
+      menuPresets();
+      break;
+    }
   }
 }
 
-void menuSettings()
+void menuSettings(boolean back)
+{ // Меню настроек
+  byte posMenu = 0;
+
+  if (back)
+    posMenu = 3;
+
+  lcd.clear();
+  while (true)
+  {
+    lcd.setCursor(1, 0);
+    lcd.print("Regular update"); // Регулярность обновления
+
+    lcd.setCursor(1, 1);
+    lcd.print("Wi-Fi settings"); // Настройка Wi-Fi
+
+    lcd.setCursor(1, 2);
+    lcd.print("Forced update"); // Принудительное обновление данных
+
+    lcd.setCursor(1, 3);
+    lcd.print("Restart"); // Перезагрузка
+
+    if (but_down.isClick())
+      posMenu = posMenu + 1;
+    if (but_up.isClick())
+      posMenu = posMenu - 1;
+
+    if (posMenu == -1)
+      posMenu = 0;
+
+    if (posMenu == 0)
+    {
+      lcd.setCursor(0, 1);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print(" ");
+      lcd.setCursor(0, 0);
+      lcd.print("\x13");
+    }
+    else if (posMenu == 1)
+    {
+      lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print(" ");
+      lcd.setCursor(0, 1);
+      lcd.print("\x13");
+    }
+    else if (posMenu == 2)
+    {
+      lcd.setCursor(0, 1);
+      lcd.print(" ");
+      lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print("\x13");
+    }
+    else if (posMenu == 3)
+    {
+      lcd.setCursor(0, 1);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print(" ");
+      lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print("\x13");
+    }
+
+    if (posMenu == 4)
+    {
+      // Переход на след стр
+      menuSettingsValue();
+    }
+
+    if (but_enter.isSingle())
+    {
+      switch (posMenu)
+      {
+      case 1:
+        // TODO 1 Пункт меню
+        break;
+
+      case 2:
+        // TODO 2 Пункт меню
+        break;
+      }
+    }
+
+    if (but_enter.isDouble())
+    {
+      lcd.clear();
+      // TODO Выход в главный экран
+      break;
+    }
+  }
+}
+
+void menuSettingsValue()
 { // Меню настроек
   byte posMenu = 0;
 
@@ -257,16 +505,16 @@ void menuSettings()
   while (true)
   {
     lcd.setCursor(1, 0);
-    lcd.print("Te\274\276epa\277ypa"); // Температура
+    lcd.print("Ground Humidity"); // Влажность почвы
 
     lcd.setCursor(1, 1);
-    lcd.print("Oc\263e\346e\275\270e"); // Освещение
+    lcd.print("Ground Temp"); // Температура почвы
 
     lcd.setCursor(1, 2);
-    lcd.print("Oc\263e\346e\275\270e"); // Освещение
+    lcd.print("Air Humidity"); // Влажность воздуха
 
     lcd.setCursor(1, 3);
-    lcd.print("Oc\263e\346e\275\270e"); // Освещение
+    lcd.print("Air Temp"); // Температура воздуха
 
     if (but_down.isClick())
       posMenu = posMenu + 1;
@@ -275,7 +523,7 @@ void menuSettings()
 
     if (posMenu == 0)
     {
-      menuSettings();
+      menuSettings(true);
     }
 
     if (posMenu == 0)
@@ -325,7 +573,8 @@ void menuSettings()
 
     if (posMenu == 4)
     {
-      // TODO Переход на след стр
+      // Переход на след стр
+      posMenu = 3; // Временный запрет перехода на 3 стр
     }
 
     if (but_enter.isSingle())
@@ -333,11 +582,11 @@ void menuSettings()
       switch (posMenu)
       {
       case 1:
-        // TODO 1 пункт меню
+        // TODO 1 Пункт меню
         break;
 
       case 2:
-        // TODO 2 пункт меню
+        // TODO 2 Пункт меню
         break;
       }
     }
@@ -359,16 +608,16 @@ void menuPresets()
   while (true)
   {
     lcd.setCursor(1, 0);
-    lcd.print("Te\274\276epa\277ypa"); // Температура
+    lcd.print(namesPreset[0]); // Температура
 
     lcd.setCursor(1, 1);
-    lcd.print("Oc\263e\346e\275\270e"); // Освещение
+    lcd.print(namesPreset[1]); // Освещение
 
     lcd.setCursor(1, 2);
-    lcd.print("Oc\263e\346e\275\270e"); // Освещение
+    lcd.print(namesPreset[2]); // Освещение
 
     lcd.setCursor(1, 3);
-    lcd.print("Oc\263e\346e\275\270e"); // Освещение
+    lcd.print(namesPreset[3]); // Освещение
 
     if (but_down.isClick())
       posMenu = posMenu + 1;
@@ -377,7 +626,6 @@ void menuPresets()
 
     if (posMenu == 0)
     {
-      menuSettings();
     }
 
     if (posMenu == 0)
@@ -435,11 +683,19 @@ void menuPresets()
       switch (posMenu)
       {
       case 1:
-        // 1 клик
+        preset1();
         break;
 
       case 2:
-        // 2 клика
+        preset2();
+        break;
+
+      case 3:
+        preset3();
+        break;
+
+      case 4:
+        preset4();
         break;
       }
     }
@@ -452,3 +708,205 @@ void menuPresets()
     }
   }
 }
+
+void preset0() {}
+void preset1() {}
+void preset2() {}
+void preset3() {}
+void preset4() {}
+void preset5() {}
+
+// Меню настроек времени полива
+void regularUpdateSettings()
+{
+  lcd.clear();
+  for (;;)
+  {
+    lcd.setCursor(0, 1);
+    lcd.print("Regular Update");
+    lcd.setCursor(4, 2);
+    lcd.print(regularUpdate);
+    lcd.print(" \274\270\275"); // мин
+
+    if (but_up.isClick())
+    {
+      regularUpdate++;
+    }
+    if (but_down.isClick())
+    {
+      regularUpdate--;
+    }
+    if (but_up.isStep())
+    {
+      regularUpdate++;
+    }
+    if (but_down.isStep())
+    {
+      regularUpdate--;
+    }
+
+    if (but_enter.isSingle())
+    {
+      EEPROM.update(5, regularUpdate);
+      lcd.clear();
+      break;
+    }
+  }
+}
+//________________________________________________
+
+// Меню настроек влажности почвы
+void groundHumiditySettings()
+{
+  lcd.clear();
+  for (;;)
+  {
+    lcd.setCursor(0, 1);
+    lcd.print("Ground Humidity");
+    lcd.setCursor(4, 2);
+    lcd.print(groundHumiditySet);
+    lcd.print(" \274\270\275"); // мин
+
+    if (but_up.isClick())
+    {
+      groundHumiditySet++;
+    }
+    if (but_down.isClick())
+    {
+      groundHumiditySet--;
+    }
+    if (but_up.isStep())
+    {
+      groundHumiditySet++;
+    }
+    if (but_down.isStep())
+    {
+      groundHumiditySet--;
+    }
+
+    if (but_enter.isSingle())
+    {
+      EEPROM.update(5, groundHumiditySet);
+      lcd.clear();
+      break;
+    }
+  }
+}
+//________________________________________________
+
+// Меню настроек температуры почвы
+void groundTempSettings()
+{
+  lcd.clear();
+  for (;;)
+  {
+    lcd.setCursor(0, 1);
+    lcd.print("Ground Temperature");
+    lcd.setCursor(4, 2);
+    lcd.print(groundTempSet);
+    lcd.print(" \274\270\275"); // мин
+
+    if (but_up.isClick())
+    {
+      groundTempSet++;
+    }
+    if (but_down.isClick())
+    {
+      groundTempSet--;
+    }
+    if (but_up.isStep())
+    {
+      groundTempSet++;
+    }
+    if (but_down.isStep())
+    {
+      groundTempSet--;
+    }
+
+    if (but_enter.isSingle())
+    {
+      EEPROM.update(5, groundTempSet);
+      lcd.clear();
+      break;
+    }
+  }
+}
+//________________________________________________
+
+// Меню настроек влажности воздуха
+void airHumiditySettings()
+{
+  lcd.clear();
+  for (;;)
+  {
+    lcd.setCursor(0, 1);
+    lcd.print("Air Humidity");
+    lcd.setCursor(4, 2);
+    lcd.print(airHumiditySet);
+    lcd.print(" \274\270\275"); // мин
+
+    if (but_up.isClick())
+    {
+      airHumiditySet++;
+    }
+    if (but_down.isClick())
+    {
+      airHumiditySet--;
+    }
+    if (but_up.isStep())
+    {
+      airHumiditySet++;
+    }
+    if (but_down.isStep())
+    {
+      airHumiditySet--;
+    }
+
+    if (but_enter.isSingle())
+    {
+      EEPROM.update(5, airHumiditySet);
+      lcd.clear();
+      break;
+    }
+  }
+}
+//________________________________________________
+
+// Меню настроек температуры воздуха
+void airTempSettings()
+{
+  lcd.clear();
+  for (;;)
+  {
+    lcd.setCursor(0, 1);
+    lcd.print("Air Temperature");
+    lcd.setCursor(4, 2);
+    lcd.print(airTempSet);
+    lcd.print(" \274\270\275"); // мин
+
+    if (but_up.isClick())
+    {
+      airTempSet++;
+    }
+    if (but_down.isClick())
+    {
+      airTempSet--;
+    }
+    if (but_up.isStep())
+    {
+      airTempSet++;
+    }
+    if (but_down.isStep())
+    {
+      airTempSet--;
+    }
+
+    if (but_enter.isSingle())
+    {
+      EEPROM.update(5, airTempSet);
+      lcd.clear();
+      break;
+    }
+  }
+}
+//________________________________________________
