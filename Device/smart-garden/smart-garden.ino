@@ -1,3 +1,4 @@
+//* Подключение библиотек
 #include <ArduinoJson.h>
 #include <SoftwareSerial.h>
 #include <LiquidCrystal.h>
@@ -5,18 +6,19 @@
 #include <GyverButton.h>
 #include <EEPROM.h>
 
+//* Директивы пинов
 #define DHT_PIN 7
-
 #define BUT_UP 0
 #define BUT_DOWN 0
 #define BUT_ENTER 0
 
+//* Настройки
 #define RX 8
 #define TX 9
 String AP = "Poco";
 String PASS = "esp82668";
 
-// Пресеты
+//@ Пресеты
 const char *namesPreset[] = {
     "B\273a\264o\273\306\262\270\263\303e",               // 0
     "C\263e\277o\273\306\262\270\263\303e",               // 1
@@ -26,53 +28,55 @@ const char *namesPreset[] = {
     "He\276p\270xo\277\273\270\263\303e",                 // 5
 };
 
-// Значения пресетов
-// Пресет 1
+//@ Значения пресетов
+//? Пресет 1
 const byte groundHumidityPreset1 = 0;
 const byte groundTempPreset1 = 0;
 const byte airHumidityPreset1 = 0;
 const byte airTempPreset1 = 0;
-//_____________
 
-// Пресет 2
+
+//? Пресет 2
 const byte groundHumidityPreset2 = 0;
 const byte groundTempPreset2 = 0;
 const byte airHumidityPreset2 = 0;
 const byte airTempPreset2 = 0;
-//_____________
 
-// Пресет 3
+
+//? Пресет 3
 const byte groundHumidityPreset3 = 0;
 const byte groundTempPreset3 = 0;
 const byte airHumidityPreset3 = 0;
 const byte airTempPreset3 = 0;
-//_____________
 
-// Пресет 4
+
+//? Пресет 4
 const byte groundHumidityPreset4 = 0;
 const byte groundTempPreset4 = 0;
 const byte airHumidityPreset4 = 0;
 const byte airTempPreset4 = 0;
-//_____________
 
-//___________________________
-//_________________________________________
 
-const int id = 1;
-byte regularUpdate = 1;
+//@ Общие настройки устройства
+const int id = 1; //? ID устройства
 
-byte groundHumidity = 0;
-float groundTemp = 0;
-byte airHumidity = 0;
-float airTemp = 0;
-byte lighting = 0;
+byte regularUpdate = 1; //? Регулярность обновления данных
 
-byte groundHumiditySet = 0;
-float groundTempSet = 0;
-byte airHumiditySet = 0;
-float airTempSet = 0;
-char notificationCode[4] = {"0000"};
+byte groundHumidity = 0; //? Текущая влажность почвы
+float groundTemp = 0; //? Текущая температура почвы
+byte airHumidity = 0; //? Текущая влажность воздуха
+float airTemp = 0; //? Текущая температура воздуха
 
+byte lighting = 0; //? Текущий уровень освещенности
+
+byte groundHumiditySet = 0; //? Необходимая влажность почвы
+float groundTempSet = 0; //? Необходимая температура почвы
+byte airHumiditySet = 0; //? Необходимая влажность воздуха
+float airTempSet = 0; //? Необходимая температура воздуха
+
+char notificationCode[4] = {"0000"}; //? Код уведомления
+
+//@ Технические переменные
 int countTimeCommand;
 
 unsigned long lastTimeMillis = 0;
@@ -80,15 +84,17 @@ unsigned long currentTime[2] = {0, 0};
 
 boolean found = false;
 
-SoftwareSerial ESP8266(RX, TX);
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-DHT dht(DHT_PIN, DHT11);
-GButton but_up(BUT_UP);       // Кнопка вверх
-GButton but_down(BUT_DOWN);   // Кнопка вниз
-GButton but_enter(BUT_ENTER); // Кнопка ввод
 
-// Символы для LCD-экрана
-byte water[8] = { // Капля
+//@ Инициализация классов для библиотек
+SoftwareSerial ESP8266(RX, TX); //? Программный последовательный порт
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2); //? Экран
+DHT dht(DHT_PIN, DHT11); //? Датчик температуры и влажности воздуха
+GButton but_up(BUT_UP); //? Кнопка вверх
+GButton but_down(BUT_DOWN); //? Кнопка вниз
+GButton but_enter(BUT_ENTER); //? Кнопка ввод (Enter)
+
+//@ Символы для LCD-экрана
+byte water[8] = { //? Капля
     B00100,
     B00100,
     B01110,
@@ -99,7 +105,7 @@ byte water[8] = { // Капля
 
 };
 
-byte temp[8] = { // Температура
+byte temp[8] = { //? Температура
     B00101,
     B00100,
     B00100,
@@ -110,7 +116,7 @@ byte temp[8] = { // Температура
 
 };
 
-byte lamp[8] = { // Лампочка
+byte lamp[8] = { //? Лампочка
     B01110,
     B10001,
     B10101,
@@ -120,7 +126,9 @@ byte lamp[8] = { // Лампочка
     B00100
 
 };
-//________________________________________
+
+
+void(* resetFunc) (void) = 0;  //@ Функция перезагрузки
 
 String outputDataFromString(String text, char firstChar, char secondChar, bool json = true)
 {
@@ -503,7 +511,7 @@ void menuSettings(boolean back)
         break;
 
       case 3:
-        // TODO 4 Пункт меню
+        resetFunc();
         break;
       }
     }
@@ -511,7 +519,8 @@ void menuSettings(boolean back)
     if (but_enter.isDouble())
     {
       lcd.clear();
-      // TODO Выход в главный экран
+      lcdDisplay();
+      loop();
       break;
     }
   }
@@ -593,7 +602,7 @@ void menuSettingsValue()
 
     if (posMenu == 4)
     {
-      // TODO Переход на след стр
+      // TODO Переход на след стр (Необязательно)
       posMenu = 3; // !Временный запрет перехода на 3 стр
     }
 
@@ -602,19 +611,19 @@ void menuSettingsValue()
       switch (posMenu)
       {
       case 0:
-        // TODO 1 Пункт меню
+        groundHumiditySettings();
         break;
 
       case 1:
-        // TODO 2 Пункт меню
+        groundTempSettings();
         break;
       
       case 2:
-        // TODO 3 Пункт меню
+        airHumiditySettings();
         break;
       
       case 3:
-        // TODO 4 Пункт меню
+        airTempSettings();
         break;
       }
     }
@@ -622,7 +631,8 @@ void menuSettingsValue()
     if (but_enter.isDouble())
     {
       lcd.clear();
-      // TODO Выход в главный экран
+      lcdDisplay();
+      loop();
       break;
     }
   }
