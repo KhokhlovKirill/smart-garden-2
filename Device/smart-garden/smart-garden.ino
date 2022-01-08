@@ -24,33 +24,31 @@ const char *namesPreset[] = {
     "C\263e\277o\273\306\262\270\263\303e",               // 1
     "Te\276\273o\273\306\262\270\263\303e",               // 2
     "Te\276\273oc\263e\277o\273\306\262\270\263\303e",    // 3
-    "B\273a\264o\277e\276\273o\273\306\262\270\263\303e", // 4
-    "He\276p\270xo\277\273\270\263\303e",                 // 5
 };
 
 //@ Значения пресетов
-//? Пресет 1
+//? Пресет 0
 const byte groundHumidityPreset1 = 0;
 const byte groundTempPreset1 = 0;
 const byte airHumidityPreset1 = 0;
 const byte airTempPreset1 = 0;
 
 
-//? Пресет 2
+//? Пресет 1
 const byte groundHumidityPreset2 = 0;
 const byte groundTempPreset2 = 0;
 const byte airHumidityPreset2 = 0;
 const byte airTempPreset2 = 0;
 
 
-//? Пресет 3
+//? Пресет 2
 const byte groundHumidityPreset3 = 0;
 const byte groundTempPreset3 = 0;
 const byte airHumidityPreset3 = 0;
 const byte airTempPreset3 = 0;
 
 
-//? Пресет 4
+//? Пресет 3
 const byte groundHumidityPreset4 = 0;
 const byte groundTempPreset4 = 0;
 const byte airHumidityPreset4 = 0;
@@ -89,9 +87,9 @@ boolean found = false;
 SoftwareSerial ESP8266(RX, TX); //? Программный последовательный порт
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2); //? Экран
 DHT dht(DHT_PIN, DHT11); //? Датчик температуры и влажности воздуха
-GButton but_up(BUT_UP); //? Кнопка вверх
-GButton but_down(BUT_DOWN); //? Кнопка вниз
-GButton but_enter(BUT_ENTER); //? Кнопка ввод (Enter)
+GButton but_up(BUT_UP); //? GyverButton Кнопка вверх
+GButton but_down(BUT_DOWN); //? GyverButton Кнопка вниз
+GButton but_enter(BUT_ENTER); //? GyverButton Кнопка ввод (Enter)
 
 //@ Символы для LCD-экрана
 byte water[8] = { //? Капля
@@ -127,9 +125,12 @@ byte lamp[8] = { //? Лампочка
 
 };
 
+//* Технические функции
 
 void(* resetFunc) (void) = 0;  //@ Функция перезагрузки
 
+
+//@ Поиск нужных данных среди String
 String outputDataFromString(String text, char firstChar, char secondChar, bool json = true)
 {
   byte first, second;
@@ -165,6 +166,7 @@ String outputDataFromString(String text, char firstChar, char secondChar, bool j
   return result;
 }
 
+//@ Формирование и отправление GET-запроса на сервер
 void makeGetRequest(String host, String url)
 {
   ESP8266.println("AT+CIPMUX=1");
@@ -182,6 +184,7 @@ void makeGetRequest(String host, String url)
   ESP8266.println("");
 }
 
+//@ Отправление AT-команды на ESP8266
 void sendCommand(String command, int maxTime, char readReplay[])
 {
   Serial.print("at command => ");
@@ -212,12 +215,14 @@ void sendCommand(String command, int maxTime, char readReplay[])
   found = false;
 }
 
+//@ Подключение к Wi-Fi
 void wifiConnection()
 {
   sendCommand("AT+CWMODE=1", 5, "OK");
   sendCommand("AT+CWJAP=\"" + AP + "\",\"" + PASS + "\"", 20, "OK");
 }
 
+//@ Проверка подключение к Wi-Fi / Получение SSID
 String checkWifiConnection()
 {
   ESP8266.println("AT+CWJAP?");
@@ -239,13 +244,15 @@ String checkWifiConnection()
   return "ERROR";
 }
 
+//@ Формирование URL для GET-запроса на сервер
 void sendRequest()
 {
   makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity));
 }
 
+//@ Отрисовка основного экрана на ЖК-дисплее
 void lcdDisplay()
-{ // Отрисовка основного экрана
+{ 
   lcd.setCursor(1, 1);
   lcd.write(byte(0));
   lcd.print("-");
@@ -279,8 +286,9 @@ void lcdDisplay()
             "C");
 }
 
+//@ Получение данных с датчиков и формирование кода уведомления
 void getValueFromSensors()
-{ // Получение данных с датчиков
+{
   dht.read();
   airTemp = dht.getTemperatureC();
   airHumidity = dht.getHumidity();
@@ -338,6 +346,7 @@ void getValueFromSensors()
   }
 }
 
+//@ Функция отправки данных на сервер
 void sendData(){
   lcd.clear();
   lcd.setCursor(3, 1);
@@ -351,39 +360,43 @@ void sendData(){
   lcdDisplay();
 }
 
+
+//* Стандартные функции Arduino
 void setup()
 {
-  // Инициализация модулей
+  //@ Инициализация модулей
   lcd.begin(20, 4);
   Serial.begin(9600);
   ESP8266.begin(9600);
   dht.begin();
 
-  // Инициализация символов
+  //@ Инициализация символов для ЖК-дисплея
   lcd.createChar(0, water);
   lcd.createChar(1, temp);
   lcd.createChar(2, lamp);
-  //____________________________
 
-  // Установка режима опроса кнопки на автоматический
+  //@ Установка режима опроса кнопки на автоматический
   but_up.setTickMode(AUTO);
   but_down.setTickMode(AUTO);
   but_enter.setTickMode(AUTO);
-  //______________________________
 
+  //@ Получение данных с датчиков и отрисовка основного экрана
   getValueFromSensors();
   lcdDisplay();
 
-  ESP8266.println("AT+RST"); // Перезагрузка esp8266
+  //@ Перезагрузка ESP8266
+  ESP8266.println("AT+RST");
 
+  //@ Подключение к Wi-Fi и отправка данных на сервер
   wifiConnection();
   sendData();
 }
 
 void loop()
 {
-  but_enter.tick(); // Принудительное считывание значения с кнопки Enter
+  but_enter.tick(); //@ Принудительное считывание значения с кнопки Enter
 
+  //@ Обновление данных и проверка Wi-Fi в устройстве каждые 10 сек
   if (millis() - currentTime[0] > 10000)
   {
     currentTime[0] = millis();
@@ -392,34 +405,38 @@ void loop()
     checkWifiConnection();
   }
 
+  //@ Отправка данных на сервер через заданный промежуток времени
   if (millis() - currentTime[1] > regularUpdate * 60000)
   {
     currentTime[1] = millis();
     sendData();
   }
 
+  //@ Работа с кнопкой (Вход в меню настроек и пресетов)
   if (but_enter.hasClicks())
   {
     switch (but_enter.getClicks())
     {
     case 1:
-      menuSettings(false);
+      menuSettings(false); //? Вход в меню настроек с параметром back = false
       break;
 
     case 2:
-      menuPresets();
+      menuPresets(); //? Вход в меню пресетов
       break;
     }
   }
 }
 
-void menuSettings(boolean back)
-{ // Меню настроек
-  byte posMenu = 0;
 
-  if (back)
-    posMenu = 3;
+//* Меню настройки устройства
+void menuSettings(bool back)
+{
+  byte posMenu = 1; //? Текущая выбранная позиция в меню
 
+  if (back) posMenu = 4; //? Если пользователь возвращается из нижнего меню в это, то позицию в меню выставить в 3
+
+  //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
   while (true)
   {
@@ -435,15 +452,19 @@ void menuSettings(boolean back)
     lcd.setCursor(1, 3);
     lcd.print("Restart"); // Перезагрузка
 
+    //@ Работа с кнопками (вверх и вниз)
     if (but_down.isClick())
       posMenu = posMenu + 1;
     if (but_up.isClick())
       posMenu = posMenu - 1;
 
-    if (posMenu == -1)
-      posMenu = 0;
+    if (posMenu == 0) posMenu = 1; //? Запрет выхода в более верхнее меню
 
-    if (posMenu == 0)
+    if (posMenu == 5) menuSettingsValue(); //? Переход на следующую страницу меню настроек
+    
+
+    //@ Отрисовка курсоров выбора пунктов меню
+    if (posMenu == 1)
     {
       lcd.setCursor(0, 1);
       lcd.print(" ");
@@ -452,34 +473,34 @@ void menuSettings(boolean back)
       lcd.setCursor(0, 3);
       lcd.print(" ");
       lcd.setCursor(0, 0);
-      lcd.print("\x13");
-    }
-    else if (posMenu == 1)
-    {
-      lcd.setCursor(0, 0);
-      lcd.print(" ");
-      lcd.setCursor(0, 2);
-      lcd.print(" ");
-      lcd.setCursor(0, 3);
-      lcd.print(" ");
-      lcd.setCursor(0, 1);
       lcd.print("\x13");
     }
     else if (posMenu == 2)
     {
-      lcd.setCursor(0, 1);
-      lcd.print(" ");
       lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
       lcd.print(" ");
       lcd.setCursor(0, 3);
       lcd.print(" ");
-      lcd.setCursor(0, 2);
+      lcd.setCursor(0, 1);
       lcd.print("\x13");
     }
     else if (posMenu == 3)
     {
       lcd.setCursor(0, 1);
       lcd.print(" ");
+      lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print("\x13");
+    }
+    else if (posMenu == 4)
+    {
+      lcd.setCursor(0, 1);
+      lcd.print(" ");
       lcd.setCursor(0, 2);
       lcd.print(" ");
       lcd.setCursor(0, 0);
@@ -488,34 +509,30 @@ void menuSettings(boolean back)
       lcd.print("\x13");
     }
 
-    if (posMenu == 4)
-    {
-      // Переход на след стр
-      menuSettingsValue();
-    }
-
+    //@ Выбор пунктов в меню
     if (but_enter.isSingle())
     {
       switch (posMenu)
       {
-      case 0:
+      case 1: //? Пункт 1
         regularUpdateSettings();
         break;
 
-      case 1:
+      case 2: //? Пункт 2
         menuWifiSettings();
         break;
       
-      case 2:
+      case 3: //? Пункт 3
         sendData();
         break;
 
-      case 3:
+      case 4: //? Пункт 4
         resetFunc();
         break;
       }
     }
 
+    //@ Выход на главный экран при двойном нажатии кнопки Enter
     if (but_enter.isDouble())
     {
       lcd.clear();
@@ -526,10 +543,12 @@ void menuSettings(boolean back)
   }
 }
 
+//* Меню настройки необходимых параметров для растения
 void menuSettingsValue()
-{ // Меню настроек
-  byte posMenu = 0;
+{
+  byte posMenu = 1; //? Текущая выбранная позиция в меню
 
+  //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
   while (true)
   {
@@ -545,17 +564,18 @@ void menuSettingsValue()
     lcd.setCursor(1, 3);
     lcd.print("Air Temp"); // Температура воздуха
 
+    //@ Работа с кнопками (вверх и вниз)
     if (but_down.isClick())
       posMenu = posMenu + 1;
     if (but_up.isClick())
       posMenu = posMenu - 1;
 
-    if (posMenu == -1)
-    {
-      menuSettings(true);
-    }
-
-    if (posMenu == 0)
+    if (posMenu == 0) menuSettings(true); //? Возврат на предыдущую страницу настроек
+    
+    if (posMenu == 5) posMenu = 4; //? Запрет выхода в более низкое меню
+    
+    //@ Отрисовка курсоров выбора пунктов меню
+    if (posMenu == 1)
     {
       lcd.setCursor(0, 1);
       lcd.print(" ");
@@ -564,34 +584,34 @@ void menuSettingsValue()
       lcd.setCursor(0, 3);
       lcd.print(" ");
       lcd.setCursor(0, 0);
-      lcd.print("\x13");
-    }
-    else if (posMenu == 1)
-    {
-      lcd.setCursor(0, 0);
-      lcd.print(" ");
-      lcd.setCursor(0, 2);
-      lcd.print(" ");
-      lcd.setCursor(0, 3);
-      lcd.print(" ");
-      lcd.setCursor(0, 1);
       lcd.print("\x13");
     }
     else if (posMenu == 2)
     {
-      lcd.setCursor(0, 1);
-      lcd.print(" ");
       lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
       lcd.print(" ");
       lcd.setCursor(0, 3);
       lcd.print(" ");
-      lcd.setCursor(0, 2);
+      lcd.setCursor(0, 1);
       lcd.print("\x13");
     }
     else if (posMenu == 3)
     {
       lcd.setCursor(0, 1);
       lcd.print(" ");
+      lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print("\x13");
+    }
+    else if (posMenu == 4)
+    {
+      lcd.setCursor(0, 1);
+      lcd.print(" ");
       lcd.setCursor(0, 2);
       lcd.print(" ");
       lcd.setCursor(0, 0);
@@ -600,34 +620,30 @@ void menuSettingsValue()
       lcd.print("\x13");
     }
 
-    if (posMenu == 4)
-    {
-      // TODO Переход на след стр (Необязательно)
-      posMenu = 3; // !Временный запрет перехода на 3 стр
-    }
-
+    //@ Выбор пунктов в меню
     if (but_enter.isSingle())
     {
       switch (posMenu)
       {
-      case 0:
+      case 1: //? Пункт 1
         groundHumiditySettings();
         break;
 
-      case 1:
+      case 2: //? Пункт 2
         groundTempSettings();
         break;
       
-      case 2:
+      case 3: //? Пункт 3
         airHumiditySettings();
         break;
       
-      case 3:
+      case 4: //? Пункт 4
         airTempSettings();
         break;
       }
     }
 
+    //@ Выход на главный экран при двойном нажатии кнопки Enter
     if (but_enter.isDouble())
     {
       lcd.clear();
@@ -638,35 +654,39 @@ void menuSettingsValue()
   }
 }
 
+//* Меню пресетов
 void menuPresets()
-{ // Меню настроек
-  byte posMenu = 0;
+{
+  byte posMenu = 1; //? Текущая выбранная позиция в меню
 
+  //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
   while (true)
   {
     lcd.setCursor(1, 0);
-    lcd.print(namesPreset[0]); // Температура
+    lcd.print(namesPreset[0]); //? Пресет 0
 
     lcd.setCursor(1, 1);
-    lcd.print(namesPreset[1]); // Освещение
+    lcd.print(namesPreset[1]); //? Пресет 1
 
     lcd.setCursor(1, 2);
-    lcd.print(namesPreset[2]); // Освещение
+    lcd.print(namesPreset[2]); //? Пресет 2
 
     lcd.setCursor(1, 3);
-    lcd.print(namesPreset[3]); // Освещение
+    lcd.print(namesPreset[3]); //? Пресет 3
 
+    //@ Работа с кнопками (вверх и вниз)
     if (but_down.isClick())
       posMenu = posMenu + 1;
     if (but_up.isClick())
       posMenu = posMenu - 1;
 
-    if (posMenu == 0)
-    {
-    }
+    if (posMenu == 0) posMenu = 1; //? Запрет выхода в более верхнее меню
 
-    if (posMenu == 0)
+    if (posMenu == 5) posMenu = 4; //? Запрет выхода в более низкое меню
+    
+    //@ Отрисовка курсоров выбора пунктов меню
+    if (posMenu == 1)
     {
       lcd.setCursor(0, 1);
       lcd.print(" ");
@@ -675,34 +695,34 @@ void menuPresets()
       lcd.setCursor(0, 3);
       lcd.print(" ");
       lcd.setCursor(0, 0);
-      lcd.print("\x13");
-    }
-    else if (posMenu == 1)
-    {
-      lcd.setCursor(0, 0);
-      lcd.print(" ");
-      lcd.setCursor(0, 2);
-      lcd.print(" ");
-      lcd.setCursor(0, 3);
-      lcd.print(" ");
-      lcd.setCursor(0, 1);
       lcd.print("\x13");
     }
     else if (posMenu == 2)
     {
-      lcd.setCursor(0, 1);
-      lcd.print(" ");
       lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
       lcd.print(" ");
       lcd.setCursor(0, 3);
       lcd.print(" ");
-      lcd.setCursor(0, 2);
+      lcd.setCursor(0, 1);
       lcd.print("\x13");
     }
     else if (posMenu == 3)
     {
       lcd.setCursor(0, 1);
       lcd.print(" ");
+      lcd.setCursor(0, 0);
+      lcd.print(" ");
+      lcd.setCursor(0, 3);
+      lcd.print(" ");
+      lcd.setCursor(0, 2);
+      lcd.print("\x13");
+    }
+    else if (posMenu == 4)
+    {
+      lcd.setCursor(0, 1);
+      lcd.print(" ");
       lcd.setCursor(0, 2);
       lcd.print(" ");
       lcd.setCursor(0, 0);
@@ -711,50 +731,47 @@ void menuPresets()
       lcd.print("\x13");
     }
 
-    if (posMenu == 4)
-    {
-      // Переход на след стр
-    }
-
+    //@ Выбор пунктов в меню
     if (but_enter.isSingle())
     {
       switch (posMenu)
       {
-      case 1:
+      case 1: //? Пункт 1
         preset1();
         break;
 
-      case 2:
+      case 2: //? Пункт 2
         preset2();
         break;
 
-      case 3:
+      case 3: //? Пункт 3
         preset3();
         break;
 
-      case 4:
+      case 4: //? Пункт 4
         preset4();
         break;
       }
     }
 
+    //@ Выход на главный экран при двойном нажатии кнопки Enter
     if (but_enter.isDouble())
     {
       lcd.clear();
-
+      lcdDisplay();
+      loop();
       break;
     }
   }
 }
 
+//* Функции прменения пресетов
 void preset0() {}
 void preset1() {}
 void preset2() {}
 void preset3() {}
-void preset4() {}
-void preset5() {}
 
-// Меню настроек времени полива
+//* Меню настроек времени полива
 void regularUpdateSettings()
 {
   lcd.clear();
@@ -791,9 +808,8 @@ void regularUpdateSettings()
     }
   }
 }
-//________________________________________________
 
-// Меню настроек влажности почвы
+//* Меню настроек влажности почвы
 void groundHumiditySettings()
 {
   lcd.clear();
@@ -830,9 +846,8 @@ void groundHumiditySettings()
     }
   }
 }
-//________________________________________________
 
-// Меню настроек температуры почвы
+//* Меню настроек температуры почвы
 void groundTempSettings()
 {
   lcd.clear();
@@ -869,9 +884,8 @@ void groundTempSettings()
     }
   }
 }
-//________________________________________________
 
-// Меню настроек влажности воздуха
+//* Меню настроек влажности воздуха
 void airHumiditySettings()
 {
   lcd.clear();
@@ -908,9 +922,8 @@ void airHumiditySettings()
     }
   }
 }
-//________________________________________________
 
-// Меню настроек температуры воздуха
+//* Меню настроек температуры воздуха
 void airTempSettings()
 {
   lcd.clear();
@@ -947,11 +960,8 @@ void airTempSettings()
     }
   }
 }
-//________________________________________________
 
-
-// Меню настроек Wi-Fi
+//* Меню настроек Wi-Fi
 void menuWifiSettings(){
 
 }
-//___________________________________
