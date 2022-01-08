@@ -1,3 +1,20 @@
+/*
+* Smart Garden Pro by Khokhlov Kirill
+
+? Техническая информация:
+
+?   EEPROM адреса данных:
+?   0 - Регулярность обновления
+?   1 - Необходимая влажность почвы
+?   2 - Необходимая температура почвы
+?   3 - Необходимая влажность воздуха
+?   4 - Необходимая температура воздуха
+?   5 - Необходимый уровень освещенности
+?   6-38 - Wi-Fi SSID
+?   39-71 - Wi-Fi пароль
+?   72-93 - Название устройства
+*/
+
 //* Подключение библиотек
 #include <ArduinoJson.h>
 #include <SoftwareSerial.h>
@@ -20,10 +37,10 @@ String PASS = "esp82668";
 
 //@ Пресеты
 const char *namesPreset[] = {
-    "B\273a\264o\273\306\262\270\263\303e",               // 0
-    "C\263e\277o\273\306\262\270\263\303e",               // 1
-    "Te\276\273o\273\306\262\270\263\303e",               // 2
-    "Te\276\273oc\263e\277o\273\306\262\270\263\303e",    // 3
+    "B\273a\264o\273\306\262\270\263\303e", // 0
+    "C\263e\277o\273\306\262\270\263\303e", // 1
+    "Te\276\273o\273\306\262\270\263\303e", // 2
+    "Te\276\273oc\263e\277o\273\306\262\270\263\303e", // 3
 };
 
 //@ Значения пресетов
@@ -379,6 +396,20 @@ void setup()
   but_up.setTickMode(AUTO);
   but_down.setTickMode(AUTO);
   but_enter.setTickMode(AUTO);
+
+  //@ Получение настроек с EEPROM
+  // TODO Закончить работу над EEPROM
+  if (EEPROM.read(5) == 255) EEPROM.update(5, 0);
+  regularUpdate = EEPROM.read(5); // Время полива
+
+  if (EEPROM.read(6) == 255) EEPROM.update(6, 0);
+  groundHumiditySet = EEPROM.read(6); // Влажность для полива
+
+  if (EEPROM.read(7) == 255) EEPROM.update(7, 0);
+  groundTempSet = EEPROM.read(7); // Температура для сигнала
+
+  if (EEPROM.read(8) == 255) EEPROM.update(8, 0);
+  airHumiditySet = EEPROM.read(8); // Освещенность для сигнала
 
   //@ Получение данных с датчиков и отрисовка основного экрана
   getValueFromSensors();
