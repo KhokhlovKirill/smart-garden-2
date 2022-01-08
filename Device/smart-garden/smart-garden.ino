@@ -737,19 +737,19 @@ void menuPresets()
       switch (posMenu)
       {
       case 1: //? Пункт 1
-        preset1();
+        preset0();
         break;
 
       case 2: //? Пункт 2
-        preset2();
+        preset1();
         break;
 
       case 3: //? Пункт 3
-        preset3();
+        preset2();
         break;
 
       case 4: //? Пункт 4
-        preset4();
+        preset3();
         break;
       }
     }
