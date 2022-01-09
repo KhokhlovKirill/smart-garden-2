@@ -12,7 +12,7 @@
 ?   5 - Необходимый уровень освещенности
 ?   6-38 - Wi-Fi SSID
 ?   39-71 - Wi-Fi пароль
-?   72-93 - Название устройства
+?   72-93 - Название устройства (возможно удаление)
 */
 
 //* Подключение библиотек
@@ -45,35 +45,36 @@ const char *namesPreset[] = {
 
 //@ Значения пресетов
 //? Пресет 0
+const byte groundHumidityPreset0 = 0;
+const byte groundTempPreset0 = 0;
+const byte airHumidityPreset0 = 0;
+const byte airTempPreset0 = 0;
+
+
+//? Пресет 1
 const byte groundHumidityPreset1 = 0;
 const byte groundTempPreset1 = 0;
 const byte airHumidityPreset1 = 0;
 const byte airTempPreset1 = 0;
 
 
-//? Пресет 1
+//? Пресет 2
 const byte groundHumidityPreset2 = 0;
 const byte groundTempPreset2 = 0;
 const byte airHumidityPreset2 = 0;
 const byte airTempPreset2 = 0;
 
 
-//? Пресет 2
+//? Пресет 3
 const byte groundHumidityPreset3 = 0;
 const byte groundTempPreset3 = 0;
 const byte airHumidityPreset3 = 0;
 const byte airTempPreset3 = 0;
 
 
-//? Пресет 3
-const byte groundHumidityPreset4 = 0;
-const byte groundTempPreset4 = 0;
-const byte airHumidityPreset4 = 0;
-const byte airTempPreset4 = 0;
-
-
 //@ Общие настройки устройства
 const int id = 1; //? ID устройства
+String deviceName = "Smart Garden";
 
 byte regularUpdate = 1; //? Регулярность обновления данных
 
@@ -81,17 +82,20 @@ byte groundHumidity = 0; //? Текущая влажность почвы
 float groundTemp = 0; //? Текущая температура почвы
 byte airHumidity = 0; //? Текущая влажность воздуха
 float airTemp = 0; //? Текущая температура воздуха
-
 byte lighting = 0; //? Текущий уровень освещенности
 
 byte groundHumiditySet = 0; //? Необходимая влажность почвы
 float groundTempSet = 0; //? Необходимая температура почвы
 byte airHumiditySet = 0; //? Необходимая влажность воздуха
 float airTempSet = 0; //? Необходимая температура воздуха
+byte lightingSet = 0; //? Необходимый уровень освещенности
 
 char notificationCode[4] = {"0000"}; //? Код уведомления
 
 //@ Технические переменные
+bool wifiIsNotConnect;
+String currentSSID = "";
+
 int countTimeCommand;
 
 unsigned long lastTimeMillis = 0;
@@ -264,7 +268,7 @@ String checkWifiConnection()
 //@ Формирование URL для GET-запроса на сервер
 void sendRequest()
 {
-  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity));
+  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity) + "&groundTemp=" + String(groundTemp) + "&groundHumidity=" + String(groundHumidity) + "&wifi=" + String(currentSSID));
 }
 
 //@ Отрисовка основного экрана на ЖК-дисплее
@@ -398,18 +402,23 @@ void setup()
   but_enter.setTickMode(AUTO);
 
   //@ Получение настроек с EEPROM
-  // TODO Закончить работу над EEPROM
-  if (EEPROM.read(5) == 255) EEPROM.update(5, 0);
-  regularUpdate = EEPROM.read(5); // Время полива
+  //? Проверка всех используемых байтов EEPROM на стандартное значение в 255
+  for (int i = 0; i < 93; i++){ 
+    if (EEPROM.read(i) == 255){
+      EEPROM.update(i, 0);
+    }
+  }
 
-  if (EEPROM.read(6) == 255) EEPROM.update(6, 0);
-  groundHumiditySet = EEPROM.read(6); // Влажность для полива
-
-  if (EEPROM.read(7) == 255) EEPROM.update(7, 0);
-  groundTempSet = EEPROM.read(7); // Температура для сигнала
-
-  if (EEPROM.read(8) == 255) EEPROM.update(8, 0);
-  airHumiditySet = EEPROM.read(8); // Освещенность для сигнала
+  //? Получение данных с EEPROM
+  EEPROM.get(0, regularUpdate);
+  EEPROM.get(1, groundHumiditySet);
+  EEPROM.get(2, groundTempSet);
+  EEPROM.get(3, airHumiditySet);
+  EEPROM.get(4, airTempSet);
+  // TODO Получение необходимого уровня освещенности с EEPROM
+  EEPROM.get(6, AP);
+  EEPROM.get(39, PASS);
+  EEPROM.get(72, deviceName);
 
   //@ Получение данных с датчиков и отрисовка основного экрана
   getValueFromSensors();
@@ -433,7 +442,14 @@ void loop()
     currentTime[0] = millis();
     getValueFromSensors();
     lcdDisplay();
-    checkWifiConnection();
+
+    String checkWifiResult = checkWifiConnection();
+    if (checkWifiResult == "#no-ap#"){
+      wifiIsNotConnect = true;
+    } else {
+      wifiIsNotConnect = false;
+      currentSSID = checkWifiResult;
+    }
   }
 
   //@ Отправка данных на сервер через заданный промежуток времени
@@ -769,18 +785,30 @@ void menuPresets()
       {
       case 1: //? Пункт 1
         preset0();
+        lcd.clear();
+        lcdDisplay();
+        loop();
         break;
 
       case 2: //? Пункт 2
         preset1();
+        lcd.clear();
+        lcdDisplay();
+        loop();
         break;
 
       case 3: //? Пункт 3
         preset2();
+        lcd.clear();
+        lcdDisplay();
+        loop();
         break;
 
       case 4: //? Пункт 4
         preset3();
+        lcd.clear();
+        lcdDisplay();
+        loop();
         break;
       }
     }
@@ -797,10 +825,30 @@ void menuPresets()
 }
 
 //* Функции прменения пресетов
-void preset0() {}
-void preset1() {}
-void preset2() {}
-void preset3() {}
+void preset0() {
+  EEPROM.put(1, groundHumidityPreset0);
+  EEPROM.put(2, groundTempPreset0);
+  EEPROM.put(3, airHumidityPreset0);
+  EEPROM.put(4, airTempPreset0);
+}
+void preset1() {
+  EEPROM.put(1, groundHumidityPreset1);
+  EEPROM.put(2, groundTempPreset1);
+  EEPROM.put(3, airHumidityPreset1);
+  EEPROM.put(4, airTempPreset1);
+}
+void preset2() {
+  EEPROM.put(1, groundHumidityPreset2);
+  EEPROM.put(2, groundTempPreset2);
+  EEPROM.put(3, airHumidityPreset2);
+  EEPROM.put(4, airTempPreset2);
+}
+void preset3() {
+  EEPROM.put(1, groundHumidityPreset3);
+  EEPROM.put(2, groundTempPreset3);
+  EEPROM.put(3, airHumidityPreset3);
+  EEPROM.put(4, airTempPreset3);
+}
 
 //* Меню настроек времени полива
 void regularUpdateSettings()
@@ -833,7 +881,7 @@ void regularUpdateSettings()
 
     if (but_enter.isSingle())
     {
-      EEPROM.update(5, regularUpdate);
+      EEPROM.put(0, regularUpdate); //? Запись данных в EEPROM
       lcd.clear();
       break;
     }
@@ -871,7 +919,7 @@ void groundHumiditySettings()
 
     if (but_enter.isSingle())
     {
-      EEPROM.update(5, groundHumiditySet);
+      EEPROM.put(1, groundHumiditySet); //? Запись данных в EEPROM
       lcd.clear();
       break;
     }
@@ -909,7 +957,7 @@ void groundTempSettings()
 
     if (but_enter.isSingle())
     {
-      EEPROM.update(5, groundTempSet);
+      EEPROM.put(2, groundTempSet); //? Запись данных в EEPROM
       lcd.clear();
       break;
     }
@@ -947,7 +995,7 @@ void airHumiditySettings()
 
     if (but_enter.isSingle())
     {
-      EEPROM.update(5, airHumiditySet);
+      EEPROM.put(3, airHumiditySet); //? Запись данных в EEPROM
       lcd.clear();
       break;
     }
@@ -985,7 +1033,7 @@ void airTempSettings()
 
     if (but_enter.isSingle())
     {
-      EEPROM.update(5, airTempSet);
+      EEPROM.put(4, airTempSet); //? Запись данных в EEPROM
       lcd.clear();
       break;
     }
