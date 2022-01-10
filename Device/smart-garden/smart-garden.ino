@@ -25,9 +25,9 @@
 
 //* Директивы пинов
 #define DHT_PIN 7
-#define BUT_UP 0
-#define BUT_DOWN 0
-#define BUT_ENTER 0
+#define BUT_UP 10
+#define BUT_DOWN 6
+#define BUT_ENTER 13
 
 //* Настройки
 #define RX 8
@@ -78,7 +78,7 @@ String deviceName = "Smart Garden";
 
 byte regularUpdate = 1; //? Регулярность обновления данных
 
-byte groundHumidity = 0; //? Текущая влажность почвы
+int groundHumidity = 0; //? Текущая влажность почвы
 float groundTemp = 0; //? Текущая температура почвы
 byte airHumidity = 0; //? Текущая влажность воздуха
 float airTemp = 0; //? Текущая температура воздуха
@@ -249,7 +249,7 @@ String checkWifiConnection()
   ESP8266.println("AT+CWJAP?");
   String ssid = "Fail";
   unsigned long currentTimeLocal = millis();
-  while ((ESP8266.available() == 0) || (millis() - currentTimeLocal) <= 5000)
+  while ((ESP8266.available() == 0) || (millis() - currentTimeLocal) <= 10000)
   {
     if (ESP8266.available() > 0)
     {
@@ -268,7 +268,7 @@ String checkWifiConnection()
 //@ Формирование URL для GET-запроса на сервер
 void sendRequest()
 {
-  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity) + "&groundTemp=" + String(groundTemp) + "&groundHumidity=" + String(groundHumidity) + "&wifi=" + String(currentSSID));
+  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity) + "&groundTemp=" + String(groundTemp) + "&groundHumidity=" + String(groundHumidity) + "&wifi=" + String(AP));
 }
 
 //@ Отрисовка основного экрана на ЖК-дисплее
@@ -416,8 +416,9 @@ void setup()
   EEPROM.get(3, airHumiditySet);
   EEPROM.get(4, airTempSet);
   // TODO Получение необходимого уровня освещенности с EEPROM
-  EEPROM.get(6, AP);
-  EEPROM.get(39, PASS);
+  // TODO FIXME Получение данных Wifi EEPROM
+//  EEPROM.get(6, AP);
+//  EEPROM.get(39, PASS);
   EEPROM.get(72, deviceName);
 
   //@ Получение данных с датчиков и отрисовка основного экрана
@@ -434,6 +435,7 @@ void setup()
 
 void loop()
 {
+  while (true){
   but_enter.tick(); //@ Принудительное считывание значения с кнопки Enter
 
   //@ Обновление данных и проверка Wi-Fi в устройстве каждые 10 сек
@@ -450,6 +452,8 @@ void loop()
       wifiIsNotConnect = false;
       currentSSID = checkWifiResult;
     }
+    Serial.println("SSID");
+    Serial.println(checkWifiConnection());
   }
 
   //@ Отправка данных на сервер через заданный промежуток времени
@@ -472,6 +476,7 @@ void loop()
       menuPresets(); //? Вход в меню пресетов
       break;
     }
+  }
   }
 }
 
