@@ -18,16 +18,22 @@
 //* Подключение библиотек
 #include <ArduinoJson.h>
 #include <SoftwareSerial.h>
+#include "GBUS.h"
 #include <LiquidCrystal.h>
 #include <TroykaDHT.h>
 #include <GyverButton.h>
 #include <EEPROM.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 
 //* Директивы пинов
 #define DHT_PIN 7
 #define BUT_UP 10
-#define BUT_DOWN 6
-#define BUT_ENTER 13
+#define BUT_DOWN 0
+#define BUT_ENTER 1
+#define GROUND_TEMP 13
+
 
 //* Настройки
 #define RX 8
@@ -112,6 +118,18 @@ GButton but_up(BUT_UP); //? GyverButton Кнопка вверх
 GButton but_down(BUT_DOWN); //? GyverButton Кнопка вниз
 GButton but_enter(BUT_ENTER); //? GyverButton Кнопка ввод (Enter)
 
+OneWire oneWire(GROUND_TEMP);
+DallasTemperature sensor(&oneWire);
+
+// подключаем софт юарт
+#include "softUART.h"
+// делаем только приёмником (экономит память)
+softUART<6, GBUS_TX> UART(1000); // пин 4, скорость 1000
+
+// подключаем GBUS
+#include "GBUS.h"
+GBUS bus(&UART, 5, 20); // обработчик UART, адрес 5, буфер 20 байт
+
 //@ Символы для LCD-экрана
 byte water[8] = { //? Капля
     B00100,
@@ -146,6 +164,11 @@ byte lamp[8] = { //? Лампочка
 
 };
 
+struct myStruct {
+  byte code;
+};
+
+  myStruct data;
 //* Технические функции
 
 void(* resetFunc) (void) = 0;  //@ Функция перезагрузки
@@ -268,7 +291,7 @@ String checkWifiConnection()
 //@ Формирование URL для GET-запроса на сервер
 void sendRequest()
 {
-  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity) + "&groundTemp=" + String(groundTemp) + "&groundHumidity=" + String(groundHumidity) + "&wifi=" + String(AP));
+  makeGetRequest("kirill.pw", "/data-send.php?id=" + String(id) + "&notificationCode=" + String(notificationCode[0]) + String(notificationCode[1]) + String(notificationCode[2]) + String(notificationCode[3]) + "&airTemp=" + String(airTemp) + "&airHumidity=" + String(airHumidity) + "&groundTemp=" + String(groundTemp, 1) + "&groundHumidity=" + String(groundHumidity) + "&wifi=" + String(AP));
 }
 
 //@ Отрисовка основного экрана на ЖК-дисплее
@@ -313,7 +336,10 @@ void getValueFromSensors()
   dht.read();
   airTemp = dht.getTemperatureC();
   airHumidity = dht.getHumidity();
-
+  sensor.requestTemperatures();
+  groundTemp = sensor.getTempCByIndex(0);
+  groundHumidity = map(analogRead(A0), 0, 1023, 0, 100);
+  
   if (groundHumidity < groundHumiditySet - 2)
   {
     notificationCode[0] = '1';
@@ -385,11 +411,15 @@ void sendData(){
 //* Стандартные функции Arduino
 void setup()
 {
+  pinMode(A0, INPUT);
+  
   //@ Инициализация модулей
   lcd.begin(20, 4);
   Serial.begin(9600);
   ESP8266.begin(9600);
   dht.begin();
+  sensor.begin();
+  sensor.setResolution(12);
 
   //@ Инициализация символов для ЖК-дисплея
   lcd.createChar(0, water);
@@ -437,10 +467,13 @@ void loop()
 {
   while (true){
   but_enter.tick(); //@ Принудительное считывание значения с кнопки Enter
-
+  bus.tick();
+      
   //@ Обновление данных и проверка Wi-Fi в устройстве каждые 10 сек
   if (millis() - currentTime[0] > 10000)
   {
+    data.code = airHumidity;
+    bus.sendData(5, data);
     currentTime[0] = millis();
     getValueFromSensors();
     lcdDisplay();
@@ -455,6 +488,7 @@ void loop()
     Serial.println("SSID");
     Serial.println(checkWifiConnection());
   }
+
 
   //@ Отправка данных на сервер через заданный промежуток времени
   if (millis() - currentTime[1] > regularUpdate * 60000)
@@ -491,7 +525,7 @@ void menuSettings(bool back)
   //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
   while (true)
-  {
+  {    
     lcd.setCursor(1, 0);
     lcd.print("Regular update"); // Регулярность обновления
 
