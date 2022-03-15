@@ -24,7 +24,7 @@ function mysql_updateElement($link, $table, $id, $element, $value){
 
 $host = 'localhost';
 $user = 'root';
-$password = 'kirillKhokhlov69Kvantorium';
+$password = 'password'; // Секретный пароль
 $db_name = 'smart-garden';
 $table = 'data';
 

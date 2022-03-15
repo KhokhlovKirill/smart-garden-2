@@ -1,7 +1,7 @@
 <?php
 $host = 'localhost';
 $user = 'root';
-$password = 'kirillKhokhlov69Kvantorium';
+$password = 'password'; // Секретный пароль
 $db_name = 'smart-garden';
 $table = 'users';
 
