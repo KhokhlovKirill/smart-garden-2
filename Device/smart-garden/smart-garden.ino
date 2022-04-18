@@ -16,9 +16,7 @@
 */
 
 //* Подключение библиотек
-#include <ArduinoJson.h>
 #include <SoftwareSerial.h>
-#include "GBUS.h"
 #include <LiquidCrystal.h>
 #include <TroykaDHT.h>
 #include <GyverButton.h>
@@ -33,6 +31,7 @@
 #define BUT_DOWN 0
 #define BUT_ENTER 1
 #define GROUND_TEMP 13
+#define SECOND_ARDUINO 6
 
 
 //* Настройки
@@ -121,14 +120,6 @@ GButton but_enter(BUT_ENTER); //? GyverButton Кнопка ввод (Enter)
 OneWire oneWire(GROUND_TEMP);
 DallasTemperature sensor(&oneWire);
 
-// подключаем софт юарт
-#include "softUART.h"
-// делаем только приёмником (экономит память)
-softUART<6, GBUS_TX> UART(1000); // пин 4, скорость 1000
-
-// подключаем GBUS
-#include "GBUS.h"
-GBUS bus(&UART, 5, 20); // обработчик UART, адрес 5, буфер 20 байт
 
 //@ Символы для LCD-экрана
 byte water[8] = { //? Капля
@@ -164,11 +155,6 @@ byte lamp[8] = { //? Лампочка
 
 };
 
-struct myStruct {
-  byte code;
-};
-
-  myStruct data;
 //* Технические функции
 
 void(* resetFunc) (void) = 0;  //@ Функция перезагрузки
@@ -236,8 +222,8 @@ void sendCommand(String command, int maxTime, char readReplay[])
   Serial.print(" ");
   while (countTimeCommand < (maxTime * 1))
   {
-    ESP8266.println(command);     //at+cipsend
-    if (ESP8266.find(readReplay)) //ok
+    ESP8266.println(command);     // AT+CIPSEND
+    if (ESP8266.find(readReplay)) // OK
     {
       found = true;
       break;
@@ -297,6 +283,11 @@ void sendRequest()
 //@ Отрисовка основного экрана на ЖК-дисплее
 void lcdDisplay()
 { 
+  lcd.setCursor(1, 0);
+  lcd.print("Bo\267\343yx:");
+  lcd.setCursor(11, 0);
+  lcd.print("\250o\300\263a:");
+  
   lcd.setCursor(1, 1);
   lcd.write(byte(0));
   lcd.print("-");
@@ -309,12 +300,6 @@ void lcdDisplay()
   lcd.print(String(airTemp, 1));
   lcd.print("\x99"
             "C");
-
-  lcd.setCursor(1, 3);
-  lcd.write(byte(2));
-  lcd.print("-");
-  lcd.print(lighting);
-  lcd.print("%");
 
   lcd.setCursor(11, 1);
   lcd.write(byte(0));
@@ -338,7 +323,7 @@ void getValueFromSensors()
   airHumidity = dht.getHumidity();
   sensor.requestTemperatures();
   groundTemp = sensor.getTempCByIndex(0);
-  groundHumidity = map(analogRead(A0), 0, 1023, 0, 100);
+  groundHumidity = map(analogRead(A0), 0, 650, 0, 100);
   
   if (groundHumidity < groundHumiditySet - 2)
   {
@@ -393,19 +378,21 @@ void getValueFromSensors()
   }
 }
 
+  
 //@ Функция отправки данных на сервер
 void sendData(){
   lcd.clear();
-  lcd.setCursor(3, 1);
-  lcd.print("Updating data...");
-  lcd.setCursor(5, 2);
-  lcd.print("Wait...");
+  lcd.setCursor(0, 1);
+  lcd.print("O\262\275o\263\273e\275\270e \343a\275\275\303x..."); // Обновление данных...
+  lcd.setCursor(4, 2);
+  lcd.print("O\266\270\343a\271\277e..."); // Ожидайте.../
 
   sendRequest();
 
   lcd.clear();
   lcdDisplay();
 }
+
 
 
 //* Стандартные функции Arduino
@@ -415,11 +402,18 @@ void setup()
   
   //@ Инициализация модулей
   lcd.begin(20, 4);
-  Serial.begin(9600);
   ESP8266.begin(9600);
   dht.begin();
   sensor.begin();
   sensor.setResolution(12);
+
+  //@ Загрузочный экран
+  lcd.clear();
+  lcd.setCursor(4, 1);
+  lcd.print("Smart Garden");
+  lcd.setCursor(1, 2);
+  lcd.print("\250o\343\272\273\306\300e\275\270e \272 Wi-Fi");
+  delay(3000);
 
   //@ Инициализация символов для ЖК-дисплея
   lcd.createChar(0, water);
@@ -453,7 +447,6 @@ void setup()
 
   //@ Получение данных с датчиков и отрисовка основного экрана
   getValueFromSensors();
-  lcdDisplay();
 
   //@ Перезагрузка ESP8266
   ESP8266.println("AT+RST");
@@ -467,16 +460,34 @@ void loop()
 {
   while (true){
   but_enter.tick(); //@ Принудительное считывание значения с кнопки Enter
-  bus.tick();
       
   //@ Обновление данных и проверка Wi-Fi в устройстве каждые 10 сек
   if (millis() - currentTime[0] > 10000)
   {
-    data.code = airHumidity;
-    bus.sendData(5, data);
     currentTime[0] = millis();
     getValueFromSensors();
     lcdDisplay();
+    if (groundHumidity < (groundHumiditySet - 5)){
+      digitalWrite(SECOND_ARDUINO, HIGH); //? Включение автоматического полива
+      }
+
+      if (notificationCode[0] == '1' || notificationCode[0] == '2'){
+      lcd.setCursor(1, 3);
+      lcd.write(byte(0));
+      }
+      if (notificationCode[1] == '1' || notificationCode[1] == '2'){
+      lcd.setCursor(3, 3);
+      lcd.write(byte(1));
+      }
+      if (notificationCode[2] == '1' || notificationCode[2] == '2'){
+      lcd.setCursor(12, 3);
+      lcd.write(byte(0));
+      }
+      if (notificationCode[3] == '1' || notificationCode[3] == '2'){
+      lcd.setCursor(14, 3);
+      lcd.write(byte(1));
+      }
+      
 
     String checkWifiResult = checkWifiConnection();
     if (checkWifiResult == "#no-ap#"){
@@ -485,8 +496,7 @@ void loop()
       wifiIsNotConnect = false;
       currentSSID = checkWifiResult;
     }
-    Serial.println("SSID");
-    Serial.println(checkWifiConnection());
+ 
   }
 
 
@@ -527,16 +537,16 @@ void menuSettings(bool back)
   while (true)
   {    
     lcd.setCursor(1, 0);
-    lcd.print("Regular update"); // Регулярность обновления
+    lcd.print("Pe\264y\273.o\262\275o\263\273e\275\270\307"); // Регулярн.обновления
 
     lcd.setCursor(1, 1);
-    lcd.print("Wi-Fi settings"); // Настройка Wi-Fi
+    lcd.print("Hac\277po\271\272a Wi-Fi"); // Настройка Wi-Fi
 
     lcd.setCursor(1, 2);
-    lcd.print("Forced update"); // Принудительное обновление данных
+    lcd.print("O\262\275o\263\270\277\304 \343a\275\275\303e"); // Обновить данные
 
     lcd.setCursor(1, 3);
-    lcd.print("Restart"); // Перезагрузка
+    lcd.print("\250epe\267a\264py\267\272a"); // Перезагрузка
 
     //@ Работа с кнопками (вверх и вниз)
     if (but_down.isClick())
@@ -639,16 +649,16 @@ void menuSettingsValue()
   while (true)
   {
     lcd.setCursor(1, 0);
-    lcd.print("Ground Humidity"); // Влажность почвы
+    lcd.print("B\273a\266\275oc\277\304 \276o\300\263\303"); // Влажность почвы
 
     lcd.setCursor(1, 1);
-    lcd.print("Ground Temp"); // Температура почвы
+    lcd.print("Te\274\276epa\277ypa \276o\300\263\303"); // Температура почвы
 
     lcd.setCursor(1, 2);
-    lcd.print("Air Humidity"); // Влажность воздуха
+    lcd.print("B\273a\266\275oc\277\304 \263o\267\343yxa"); // Влажность воздуха
 
     lcd.setCursor(1, 3);
-    lcd.print("Air Temp"); // Температура воздуха
+    lcd.print("Te\274\276epa\277ypa \263o\267\343yxa"); // Температура воздуха
 
     //@ Работа с кнопками (вверх и вниз)
     if (but_down.isClick())
@@ -893,11 +903,11 @@ void preset3() {
 void regularUpdateSettings()
 {
   lcd.clear();
-  for (;;)
+  while (true)
   {
-    lcd.setCursor(0, 1);
-    lcd.print("Regular Update");
-    lcd.setCursor(4, 2);
+    lcd.setCursor(2, 1);
+    lcd.print("Pe\264y\273.o\262\275o\263\273e\275\270\307");
+    lcd.setCursor(7, 2);
     lcd.print(regularUpdate);
     lcd.print(" \274\270\275"); // мин
 
@@ -931,13 +941,13 @@ void regularUpdateSettings()
 void groundHumiditySettings()
 {
   lcd.clear();
-  for (;;)
+  while (true)
   {
-    lcd.setCursor(0, 1);
-    lcd.print("Ground Humidity");
-    lcd.setCursor(4, 2);
+    lcd.setCursor(2, 1);
+    lcd.print("B\273a\266\275oc\277\304 \276o\300\263\303");
+    lcd.setCursor(8, 2);
     lcd.print(groundHumiditySet);
-    lcd.print(" \274\270\275"); // мин
+    lcd.print(" %"); // мин
 
     if (but_up.isClick())
     {
@@ -969,13 +979,13 @@ void groundHumiditySettings()
 void groundTempSettings()
 {
   lcd.clear();
-  for (;;)
+  while (true)
   {
-    lcd.setCursor(0, 1);
-    lcd.print("Ground Temperature");
-    lcd.setCursor(4, 2);
+    lcd.setCursor(1, 1);
+    lcd.print("Te\274\276epa\277ypa \276o\300\263\303");
+    lcd.setCursor(5, 2);
     lcd.print(groundTempSet);
-    lcd.print(" \274\270\275"); // мин
+    lcd.print(" \x99""C"); // C
 
     if (but_up.isClick())
     {
@@ -1007,13 +1017,13 @@ void groundTempSettings()
 void airHumiditySettings()
 {
   lcd.clear();
-  for (;;)
+  while (true)
   {
-    lcd.setCursor(0, 1);
-    lcd.print("Air Humidity");
-    lcd.setCursor(4, 2);
+    lcd.setCursor(2, 1);
+    lcd.print("B\273a\266\275oc\277\304 \263o\267\343yxa");
+    lcd.setCursor(7, 2);
     lcd.print(airHumiditySet);
-    lcd.print(" \274\270\275"); // мин
+    lcd.print(" %"); // мин
 
     if (but_up.isClick())
     {
@@ -1045,13 +1055,13 @@ void airHumiditySettings()
 void airTempSettings()
 {
   lcd.clear();
-  for (;;)
+  while (true)
   {
-    lcd.setCursor(0, 1);
-    lcd.print("Air Temperature");
-    lcd.setCursor(4, 2);
+    lcd.setCursor(1, 1);
+    lcd.print("Te\274\276epa\277ypa \263o\267\343yxa");
+    lcd.setCursor(6, 2);
     lcd.print(airTempSet);
-    lcd.print(" \274\270\275"); // мин
+    lcd.print(" \x99""C"); // мин
 
     if (but_up.isClick())
     {
@@ -1082,4 +1092,5 @@ void airTempSettings()
 //* Меню настроек Wi-Fi
 void menuWifiSettings(){
 
+  // TODO Текущая сеть Wi-Fi и ее пароль
 }
