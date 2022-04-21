@@ -23,6 +23,7 @@
 #include <EEPROM.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <Wire.h>
 
 
 //* Директивы пинов
@@ -393,12 +394,21 @@ void sendData(){
   lcdDisplay();
 }
 
+void sendToArduino(byte a){
+  Wire.beginTransmission(8);
+  Wire.write(a);
+  Wire.endTransmission();
+  }
+
 
 
 //* Стандартные функции Arduino
 void setup()
 {
   pinMode(A0, INPUT);
+
+  Wire.begin();
+
   
   //@ Инициализация модулей
   lcd.begin(20, 4);
@@ -534,6 +544,7 @@ void menuSettings(bool back)
 
   //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
+  sendToArduino("Set menu");
   while (true)
   {    
     lcd.setCursor(1, 0);
