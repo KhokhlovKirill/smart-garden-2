@@ -23,7 +23,6 @@
 #include <EEPROM.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <Wire.h>
 
 
 //* Директивы пинов
@@ -208,11 +207,17 @@ void makeGetRequest(String host, String url)
 
   String cmd = "GET " + url + " HTTP/1.1\r\nHost:" + host + "\r\nConnection: close";
   ESP8266.println("AT+CIPSEND=4," + String(cmd.length() + 4));
-  delay(1000);
+  delay(3000);
 
   ESP8266.println(cmd);
-  delay(1000);
+  delay(3000);
+  ESP8266.println(cmd);
+  delay(3000);
   ESP8266.println("");
+
+    if (ESP8266.available()) {
+    Serial.write(ESP8266.read());
+  }
 }
 
 //@ Отправление AT-команды на ESP8266
@@ -379,9 +384,9 @@ void getValueFromSensors()
   }
 
   if (notificationCode[0] != '0' || notificationCode[1] != '0' || notificationCode[2] != '0' || notificationCode[3] != '0'){
-    sendToArduino(1);
+
     } else {
-      sendToArduino(0);
+
       }
 }
 
@@ -400,11 +405,6 @@ void sendData(){
   lcdDisplay();
 }
 
-void sendToArduino(byte a){
-  Wire.beginTransmission(8);
-  Wire.write(a);
-  Wire.endTransmission();
-  }
 
 
 
@@ -413,12 +413,12 @@ void setup()
 {
   pinMode(A0, INPUT);
 
-  Wire.begin();
 
   
   //@ Инициализация модулей
   lcd.begin(20, 4);
   ESP8266.begin(9600);
+  Serial.begin(9600);
   dht.begin();
   sensor.begin();
   sensor.setResolution(12);
@@ -550,7 +550,7 @@ void menuSettings(bool back)
 
   //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
-  sendToArduino(3);
+
   while (true)
   {    
     lcd.setCursor(1, 0);
@@ -774,7 +774,6 @@ void menuPresets()
 
   //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
-  sendToArduino(3);
   while (true)
   {
     lcd.setCursor(1, 0);
