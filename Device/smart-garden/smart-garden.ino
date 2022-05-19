@@ -207,17 +207,11 @@ void makeGetRequest(String host, String url)
 
   String cmd = "GET " + url + " HTTP/1.1\r\nHost:" + host + "\r\nConnection: close";
   ESP8266.println("AT+CIPSEND=4," + String(cmd.length() + 4));
-  delay(3000);
+  delay(1000);
 
   ESP8266.println(cmd);
-  delay(3000);
-  ESP8266.println(cmd);
-  delay(3000);
+  delay(1000);
   ESP8266.println("");
-
-    if (ESP8266.available()) {
-    Serial.write(ESP8266.read());
-  }
 }
 
 //@ Отправление AT-команды на ESP8266
@@ -382,12 +376,6 @@ void getValueFromSensors()
   {
     notificationCode[3] = '0';
   }
-
-  if (notificationCode[0] != '0' || notificationCode[1] != '0' || notificationCode[2] != '0' || notificationCode[3] != '0'){
-
-    } else {
-
-      }
 }
 
   
@@ -407,18 +395,14 @@ void sendData(){
 
 
 
-
 //* Стандартные функции Arduino
 void setup()
 {
   pinMode(A0, INPUT);
-
-
   
   //@ Инициализация модулей
   lcd.begin(20, 4);
   ESP8266.begin(9600);
-  Serial.begin(9600);
   dht.begin();
   sensor.begin();
   sensor.setResolution(12);
@@ -450,7 +434,7 @@ void setup()
   }
 
   //? Получение данных с EEPROM
-  EEPROM.get(0, regularUpdate);
+ // EEPROM.get(0, regularUpdate);
   EEPROM.get(1, groundHumiditySet);
   EEPROM.get(2, groundTempSet);
   EEPROM.get(3, airHumiditySet);
@@ -503,15 +487,6 @@ void loop()
       lcd.setCursor(14, 3);
       lcd.write(byte(1));
       }
-      
-
-    String checkWifiResult = checkWifiConnection();
-    if (checkWifiResult == "#no-ap#"){
-      wifiIsNotConnect = true;
-    } else {
-      wifiIsNotConnect = false;
-      currentSSID = checkWifiResult;
-    }
  
   }
 
@@ -550,7 +525,6 @@ void menuSettings(bool back)
 
   //@ Отрисовка меню на ЖК-дисплее
   lcd.clear();
-
   while (true)
   {    
     lcd.setCursor(1, 0);
