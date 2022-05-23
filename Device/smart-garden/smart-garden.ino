@@ -323,7 +323,7 @@ void getValueFromSensors()
   airHumidity = dht.getHumidity();
   sensor.requestTemperatures();
   groundTemp = sensor.getTempCByIndex(0);
-  groundHumidity = map(analogRead(A0), 0, 650, 0, 100);
+  groundHumidity = constrain(map(analogRead(A0), 100, 650, 0, 100), 0, 100);
   
   if (groundHumidity < groundHumiditySet - 2)
   {
@@ -1081,7 +1081,26 @@ void airTempSettings()
 }
 
 //* Меню настроек Wi-Fi
-void menuWifiSettings(){
+void menuWifiSettings()
+{
+  lcd.clear();
+  while (true)
+  {
+    lcd.setCursor(1, 0);
+    lcd.print("SSID:");
+    lcd.setCursor(1, 1);
+    lcd.print(AP);
 
-  // TODO Текущая сеть Wi-Fi и ее пароль
+    lcd.setCursor(1, 2);
+    lcd.print("\250apo\273\304:");
+    lcd.setCursor(1, 3);
+    lcd.print(PASS);
+
+    if (but_enter.isSingle())
+    {
+      EEPROM.put(4, airTempSet); //? Запись данных в EEPROM
+      lcd.clear();
+      break;
+    }
+  }
 }
