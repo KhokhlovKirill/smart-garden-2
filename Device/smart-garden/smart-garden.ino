@@ -323,26 +323,22 @@ void getValueFromSensors()
   airHumidity = dht.getHumidity();
   sensor.requestTemperatures();
   groundTemp = sensor.getTempCByIndex(0);
-  groundHumidity = constrain(map(analogRead(A0), 100, 650, 0, 100), 0, 100);
+  groundHumidity = constrain(map(analogRead(A0), 100, 850, 0, 100), 0, 100);
   
   if (groundHumidity < groundHumiditySet - 2)
   {
     notificationCode[0] = '1';
-  }
-  else if (groundHumidity > groundHumiditySet + 2)
-  {
-    notificationCode[0] = '2';
   }
   else
   {
     notificationCode[0] = '0';
   }
 
-  if (groundTemp < groundTempSet - 2)
+  if (groundTemp < groundTempSet - 5)
   {
     notificationCode[1] = '1';
   }
-  else if (groundTemp > groundTempSet + 2)
+  else if (groundTemp > groundTempSet + 5)
   {
     notificationCode[1] = '2';
   }
@@ -351,11 +347,11 @@ void getValueFromSensors()
     notificationCode[1] = '0';
   }
 
-  if (airHumidity < airHumiditySet - 2)
+  if (airHumidity < airHumiditySet - 5)
   {
     notificationCode[2] = '1';
   }
-  else if (airHumidity > airHumiditySet + 2)
+  else if (airHumidity > airHumiditySet + 5)
   {
     notificationCode[2] = '2';
   }
@@ -364,11 +360,11 @@ void getValueFromSensors()
     notificationCode[2] = '0';
   }
 
-  if (airTemp < airTempSet - 2)
+  if (airTemp < airTempSet - 5)
   {
     notificationCode[3] = '1';
   }
-  else if (airTemp > airTempSet + 2)
+  else if (airTemp > airTempSet + 5)
   {
     notificationCode[3] = '2';
   }
@@ -471,19 +467,19 @@ void loop()
       digitalWrite(SECOND_ARDUINO, HIGH); //? Включение автоматического полива
       }
 
-      if (notificationCode[0] == '1' || notificationCode[0] == '2'){
+      if (notificationCode[2] == '1' || notificationCode[2] == '2'){
       lcd.setCursor(1, 3);
       lcd.write(byte(0));
       }
-      if (notificationCode[1] == '1' || notificationCode[1] == '2'){
+      if (notificationCode[3] == '1' || notificationCode[3] == '2'){
       lcd.setCursor(3, 3);
       lcd.write(byte(1));
       }
-      if (notificationCode[2] == '1' || notificationCode[2] == '2'){
+      if (notificationCode[0] == '1' || notificationCode[0] == '2'){
       lcd.setCursor(12, 3);
       lcd.write(byte(0));
       }
-      if (notificationCode[3] == '1' || notificationCode[3] == '2'){
+      if (notificationCode[1] == '1' || notificationCode[1] == '2'){
       lcd.setCursor(14, 3);
       lcd.write(byte(1));
       }
